@@ -36,7 +36,6 @@ negate formula =
 
                 NegativePredicate p terms ->
                     Literal (PositivePredicate p terms)
-
         _ ->
             Negation formula
 
@@ -50,24 +49,14 @@ eliminateImplAndEqv formula =
     case formula of
         Operation a op b ->
             let
-                newA =
-                    eliminateImplAndEqv a
-
-                newB =
-                    eliminateImplAndEqv b
+                newA = eliminateImplAndEqv a
+                newB = eliminateImplAndEqv b
             in
             case op of
-                Impl ->
-                    Operation (negate newA) Or newB
-
-                Eqv ->
-                    Operation (Operation (negate newA) Or newB) And (Operation newA Or (negate newB))
-
-                _ ->
-                    formula
-
-        _ ->
-            formula
+                Impl -> Operation (negate newA) Or newB
+                Eqv -> Operation (Operation (negate newA) Or newB) And (Operation newA Or (negate newB))
+                _ -> formula
+        _ -> formula
 
 
 moveNegations : Formula -> Formula
@@ -75,44 +64,26 @@ moveNegations outerFormula =
     case outerFormula of
         Negation formula ->
             case formula of
-                Literal _ ->
-                    negate formula
-
-                Negation f ->
-                    moveNegations f
-
+                Literal _ -> negate formula
+                Negation f -> moveNegations f
                 Operation a op b ->
                     case op of
                         And ->
                             Operation (moveNegations (Negation a)) Or (moveNegations (Negation b))
-
                         Or ->
                             Operation (moveNegations (Negation a)) And (moveNegations (Negation b))
-
                         Impl ->
                             Operation (moveNegations a) And (moveNegations (Negation b))
-
                         Eqv ->
                             Operation (moveNegations (Negation a)) Eqv (moveNegations (Negation b))
+                
+                Exists x f -> ForAll x (moveNegations (Negation f))
+                ForAll x f -> Exists x (moveNegations (Negation f))
 
-                Exists x f ->
-                    ForAll x (moveNegations (Negation f))
-
-                ForAll x f ->
-                    Exists x (moveNegations (Negation f))
-
-        Literal _ ->
-            outerFormula
-
-        Operation a op b ->
-            Operation (moveNegations a) op (moveNegations b)
-
-        Exists x f ->
-            Exists x (moveNegations f)
-
-        ForAll x f ->
-            ForAll x (moveNegations f)
-
+        Literal _ -> outerFormula
+        Operation a op b -> Operation (moveNegations a) op (moveNegations b)
+        Exists x f -> Exists x (moveNegations f)
+        ForAll x f -> ForAll x (moveNegations f)
 
 -- todo: parser
 -- todo: printer
