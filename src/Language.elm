@@ -1,5 +1,8 @@
 module Language exposing (..)
 
+import Generator exposing (..)
+import Dict exposing (Dict)
+
 type alias Language = { 
     vars : List String,
     consts : List String,
@@ -66,9 +69,12 @@ printFormula f =
         Exists x f1 -> "∃" ++ x ++ "(" ++ printFormula f1 ++ ")"
         ForAll x f1 -> "∀" ++ x ++ "(" ++ printFormula f1 ++ ")"
 
+type alias Disjunct =
+    List Literal
+
 negate : Formula -> Formula
-negate formula =
-    case formula of
+negate f =
+    case f of
         Literal literal ->
             case literal of
                 PositivePredicate p terms ->
@@ -76,11 +82,7 @@ negate formula =
 
                 NegativePredicate p terms ->
                     Literal (PositivePredicate p terms)
-        _ ->
-            Negation formula
-
-type alias Disjunct =
-    List Literal
+        _ -> Negation f
 
 eliminateImplAndEqv : Formula -> Formula
 eliminateImplAndEqv formula =
@@ -125,7 +127,50 @@ moveNegations outerFormula =
         Exists x f -> Exists x (moveNegations f)
         ForAll x f -> ForAll x (moveNegations f)
 
-
+skolemization : Language -> Formula -> (Formula, Language)
+skolemization lang formula =
+    let
+        replaceInTerm : Dict String Term -> Term -> Term
+        replaceInTerm substitutions term =
+            case term of
+                Variable var -> 
+                    case Dict.get var substitutions of
+                        Just subTerm -> subTerm
+                        _ -> term
+                Function f terms -> Function f (List.map (replaceInTerm substitutions) terms)
+                _ -> term
+        
+        replaceInLiteral : Dict String Term -> Literal -> Literal
+        replaceInLiteral substitutions literal =
+            case literal of
+                PositivePredicate p terms -> PositivePredicate p (List.map (replaceInTerm substitutions) terms)
+                NegativePredicate p terms -> NegativePredicate p (List.map (replaceInTerm substitutions) terms)
+                
+        skolemHelper : Language -> Generator -> List String -> Dict String Term -> Formula -> (Formula, Language)
+        skolemHelper l gen dependencies substitutions f =
+            case f of
+                Literal literal -> (Literal (replaceInLiteral substitutions literal), l)
+                Negation f1 ->
+                    let (newF, newL) = (skolemHelper l gen dependencies substitutions f1)
+                    in (Negation newF, newL)
+                Operation f1 op f2 ->
+                    let (newF1, newL1) = (skolemHelper l gen dependencies substitutions f1)
+                        (newF2, newL2) = (skolemHelper l gen dependencies substitutions f2)
+                    in (Operation newF1 op newF2, {l | consts = List.append newL1.consts newL2.consts, funcs = List.append newL1.funcs newL2.funcs})
+                ForAll x f1 ->
+                    let (newF, newL) = (skolemHelper l gen (x :: dependencies) substitutions f1)
+                    in (ForAll x newF, newL)
+                Exists x f1 -> 
+                    let (newTerm, newGen) = if List.isEmpty dependencies then Tuple.mapFirst Constant (getConst gen)
+                            else Tuple.mapFirst (\ funcName -> Function funcName (List.map Variable dependencies)) (getFunc gen)
+                        (newF, newL) = skolemHelper l newGen dependencies (Dict.insert x newTerm substitutions) f1
+                    in 
+                        case newTerm of 
+                            Constant c -> (newF, {newL | consts = List.append newL.consts [c]})
+                            Function func _ -> (newF, {newL | funcs = List.append newL.funcs [func]})
+                            _ -> (newF, newL)
+    in
+    skolemHelper lang (createGenerator lang.consts lang.funcs lang.vars) [] Dict.empty formula
 
 -- to CNF
 -- to PNF
