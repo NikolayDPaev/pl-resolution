@@ -2,6 +2,8 @@ module Parser exposing (parse, ParseError(..))
 import Language exposing (Language)
 import Language as L exposing (..)
 
+import Set
+
 type ParseError
     = ExpectedRightBracket
     | PredicateInTerm String
@@ -75,9 +77,9 @@ tokenizer lang str =
         |> List.map (\token -> -- map words to specific terms
             case token of
             Var string ->
-                if List.member string lang.consts then Const string
-                else if List.member string lang.funcs then Func string
-                else if List.member string lang.preds then Pred string
+                if Set.member string lang.consts then Const string
+                else if Set.member string lang.funcs then Func string
+                else if Set.member string lang.preds then Pred string
                 else Var string
             _ -> token
         ) 

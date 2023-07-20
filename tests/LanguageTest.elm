@@ -2,6 +2,7 @@ module LanguageTest exposing (..)
 
 import Language exposing (..)
 
+import Set
 import Expect exposing (..)
 import Test exposing (Test, test, describe)
 
@@ -37,8 +38,8 @@ printTest =
         )
     ]
 
-eliminateImplandEqvTest : Test
-eliminateImplandEqvTest =
+eliminateImplAndEqvTest : Test
+eliminateImplAndEqvTest =
     test "test" (\_ ->
         Expect.equal
         (Operation 
@@ -63,3 +64,112 @@ eliminateImplandEqvTest =
                 (Negation (Predicate "q" [Function "g" [Variable "y", Function "f" [Constant "c", Variable "x"]]]))))
     )
 
+moveNegationsTest : Test
+moveNegationsTest =
+    describe "tests" [
+        test "deMorgan" (\_ ->
+            Expect.equal
+            (Operation 
+                    (Operation
+                        (Negation (Predicate "p" [Constant "a"]))
+                        Or
+                        (Negation (Predicate "p" [Constant "b"])))
+                    And
+                    (Operation 
+                        (Negation (Predicate "q" [Constant "c"]))
+                        Or 
+                        (Negation (Predicate "q" [Constant "a"]))))
+            (moveNegations 
+                (Negation 
+                    (Operation 
+                    (Operation
+                        (Predicate "p" [Constant "a"])
+                        And
+                        (Predicate "p" [Constant "b"]))
+                    Or
+                    (Operation 
+                        (Predicate "q" [Constant "c"])
+                        And 
+                        (Predicate "q" [Constant "a"]))))
+            )
+        ),
+        test "impl and eqv" (\_ ->
+            Expect.equal
+            (Operation 
+                    (Operation
+                        (Predicate "p" [Constant "a"])
+                        And
+                        (Negation (Predicate "p" [Constant "b"])))
+                    And
+                    (Operation 
+                        (Negation (Predicate "q" [Constant "c"]))
+                        Eqv 
+                        (Predicate "q" [Constant "a"])))
+            (moveNegations 
+                (Negation 
+                    (Operation 
+                    (Operation
+                        (Predicate "p" [Constant "a"])
+                        Impl
+                        (Predicate "p" [Constant "b"]))
+                    Or
+                    (Operation 
+                        (Predicate "q" [Constant "c"])
+                        Eqv 
+                        (Predicate "q" [Constant "a"]))))
+            )
+        ),
+        test "ForAll and Exist"  (\_ ->
+            Expect.equal
+            (Exists "x" 
+                    (ForAll "y"
+                        (Operation 
+                        (Negation (Predicate "p" [Constant "a"]))
+                        And
+                        (ForAll "y"
+                        (Exists "z" (Predicate "p" [Constant "a"]))))))
+            (moveNegations 
+                (Negation (ForAll "x" 
+                    (Exists "y"
+                        (Operation 
+                        (Predicate "p" [Constant "a"])
+                        Or
+                        (Exists "y"
+                        (ForAll "z" (Negation (Predicate "p" [Constant "a"]))))))))
+            )
+        )
+    ]
+
+skolemizationTest : Test
+skolemizationTest =
+    let lang = {vars = Set.fromList ["x", "y", "z"], 
+                consts = Set.fromList ["a", "b"],
+                preds = Set.fromList ["p", "q"],
+                funcs = Set.fromList ["f", "g"]}
+    in
+    describe "skolemization tests" [
+        test "noDependencies" (\_ ->
+            Expect.equal
+            ((Operation (Predicate "p" [Constant "c"])
+                Impl
+                (Predicate "q" [Constant "c"])), {lang | consts = Set.insert "c" lang.consts})
+            (skolemization lang 
+                (Exists "x" (Operation 
+                    (Predicate "p" [Variable "x"])
+                    Impl
+                    (Predicate "q" [Variable "x"]))))
+        ),
+        test "MultipleDependencies" (\_ ->
+            Expect.equal
+            ((ForAll "y" (Operation
+                (Predicate "p" [Function "h" [Variable "y"]])
+                Impl
+                (Predicate "q" [Function "h" [Variable "y"], Function "i" [Variable "y"]]))),
+            {lang | funcs = Set.union (Set.fromList ["h", "i"]) lang.funcs})
+            (skolemization lang 
+                (ForAll "y" (Exists "x" (Operation
+                    (Predicate "p" [Variable "x"])
+                    Impl
+                    (Exists "z" (Predicate "q" [Variable "x", Variable "z"]))))))
+        )
+    ]

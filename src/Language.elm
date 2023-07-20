@@ -2,12 +2,13 @@ module Language exposing (..)
 
 import Generator exposing (..)
 import Dict exposing (Dict)
+import Set exposing (Set)
 
 type alias Language = { 
-    vars : List String,
-    consts : List String,
-    preds : List String,
-    funcs : List String
+    vars : Set String,
+    consts : Set String,
+    preds : Set String,
+    funcs : Set String
     }
 
 type Term
@@ -94,7 +95,7 @@ moveNegations outerFormula =
                         Impl ->
                             Operation (moveNegations a) And (moveNegations (negate b))
                         Eqv ->
-                            Operation (moveNegations (negate a)) Eqv (moveNegations (negate b))
+                            Operation (moveNegations (negate a)) Eqv (moveNegations b)
                 
                 Exists x f -> ForAll x (moveNegations (negate f))
                 ForAll x f -> Exists x (moveNegations (negate f))
@@ -127,7 +128,7 @@ skolemization lang formula =
                 Operation f1 op f2 ->
                     let (newF1, newL1) = (skolemHelper l gen dependencies substitutions f1)
                         (newF2, newL2) = (skolemHelper l gen dependencies substitutions f2)
-                    in (Operation newF1 op newF2, {l | consts = List.append newL1.consts newL2.consts, funcs = List.append newL1.funcs newL2.funcs})
+                    in (Operation newF1 op newF2, {l | consts = Set.union newL1.consts newL2.consts, funcs = Set.union newL1.funcs newL2.funcs})
                 ForAll x f1 ->
                     let (newF, newL) = (skolemHelper l gen (x :: dependencies) substitutions f1)
                     in (ForAll x newF, newL)
@@ -137,8 +138,8 @@ skolemization lang formula =
                         (newF, newL) = skolemHelper l newGen dependencies (Dict.insert x newTerm substitutions) f1
                     in 
                         case newTerm of 
-                            Constant c -> (newF, {newL | consts = List.append newL.consts [c]})
-                            Function func _ -> (newF, {newL | funcs = List.append newL.funcs [func]})
+                            Constant c -> (newF, {newL | consts = Set.insert c newL.consts})
+                            Function func _ -> (newF, {newL | funcs = Set.insert func newL.funcs})
                             _ -> (newF, newL)
     in
     skolemHelper lang (createGenerator lang.consts lang.funcs lang.vars) [] Dict.empty formula
@@ -156,19 +157,19 @@ toPrenexNormalForm lang formula =
                 Operation f1 op f2 ->
                     let (newF1, newL1) = (removeShadowedHelper l gen universalVars existentialVars substitutions f1)
                         (newF2, newL2) = (removeShadowedHelper l gen universalVars existentialVars substitutions f2)
-                    in (Operation newF1 op newF2, {l | vars = List.append newL1.vars newL2.vars})
+                    in (Operation newF1 op newF2, {l | vars = Set.union newL1.vars newL2.vars})
                 ForAll x f1 ->
                     if List.member x universalVars then
                         let (newVar, newGen) = getVar gen
                             (newF, newL) = removeShadowedHelper l newGen (newVar :: universalVars) existentialVars (Dict.insert x (Variable newVar) substitutions) f1
-                        in (ForAll x newF, {newL | vars = List.append newL.vars [newVar]})
+                        in (ForAll x newF, {newL | vars = Set.insert newVar newL.vars})
                     else let (newF, newL) = removeShadowedHelper l gen (x :: universalVars) existentialVars substitutions f1
                         in (ForAll x newF, newL)
                 Exists x f1 ->
                     if List.member x universalVars then
                         let (newVar, newGen) = getVar gen
                             (newF, newL) = removeShadowedHelper l newGen universalVars (newVar :: existentialVars) (Dict.insert x (Variable newVar) substitutions) f1
-                        in (Exists x newF, {newL | vars = List.append newL.vars [newVar]})
+                        in (Exists x newF, {newL | vars = Set.insert newVar newL.vars})
                     else let (newF, newL) = removeShadowedHelper l gen universalVars (x :: universalVars) substitutions f1
                         in (Exists x newF, newL)
         removeShadowed : Language -> Formula -> (Formula, Language)

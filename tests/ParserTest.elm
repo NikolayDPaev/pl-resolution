@@ -3,11 +3,16 @@ module ParserTest exposing (..)
 import Parser exposing (ParseError(..))
 import Language exposing (..)
 
+import Set
 import Expect exposing (..)
 import Test exposing (Test, test, describe)
 
 lang : Language
-lang = {vars = ["x", "y", "z"], consts = ["a", "b", "c"], preds = ["p", "q", "r"], funcs = ["f", "g", "h"]}
+lang = {vars = 
+        Set.fromList ["x", "y", "z"],
+        consts =  Set.fromList ["a", "b", "c"],
+        preds =  Set.fromList ["p", "q", "r"],
+        funcs =  Set.fromList ["f", "g", "h"]}
 
 propLogicTests : Test
 propLogicTests =

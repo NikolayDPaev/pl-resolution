@@ -1,20 +1,22 @@
 module Generator exposing (..)
 
+import Set exposing (Set)
+
 type alias Generator = {
         stateVars: List String,
         stateConsts: List String,
         stateFuncs: List String,
-        forbiddenVars: List String,
-        forbiddenConsts: List String,
-        forbiddenFuncs: List String
+        forbiddenVars: Set String,
+        forbiddenConsts: Set String,
+        forbiddenFuncs: Set String
     }
-createGenerator : List String -> List String -> List String -> Generator
+createGenerator : Set String -> Set String -> Set String -> Generator
 createGenerator fc ff fv = {
     forbiddenConsts = fc,
     forbiddenFuncs = ff,
     forbiddenVars = fv,
-    stateConsts = ["a", "b", "c", "d"],
-    stateFuncs = ["f", "g", "h"],
+    stateConsts = ["a", "b", "c", "d", "e"],
+    stateFuncs = ["f", "g", "h", "i", "j"],
     stateVars = ["x", "y", "z", "u", "v"]
     }
 
@@ -30,7 +32,7 @@ getConst generator =
                 else (String.dropRight 1 const) ++ String.fromChar (Char.fromCode (Char.toCode lastLetter + 1))
         newGenerator = {generator | stateConsts = List.append newState [newConst]}
     in
-    if List.member const generator.forbiddenConsts then 
+    if Set.member const generator.forbiddenConsts then 
         getConst newGenerator
     else (const, newGenerator)
 
@@ -46,7 +48,7 @@ getFunc generator =
                 else (String.dropRight 1 func) ++ String.fromChar (Char.fromCode (Char.toCode lastLetter + 1))
         newGenerator = {generator | stateFuncs = List.append newState [newFunc]}
     in
-    if List.member func generator.forbiddenFuncs then 
+    if Set.member func generator.forbiddenFuncs then 
         getFunc newGenerator
     else (func, newGenerator)
 
@@ -62,6 +64,6 @@ getVar generator =
                 else (String.dropRight 1 var) ++ String.fromChar (Char.fromCode (Char.toCode lastLetter + 1))
         newGenerator = {generator | stateVars = List.append newState [newVar]}
     in
-    if List.member var generator.forbiddenConsts then 
+    if Set.member var generator.forbiddenConsts then 
         getVar newGenerator
     else (var, newGenerator)
