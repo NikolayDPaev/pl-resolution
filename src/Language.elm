@@ -3,6 +3,8 @@ module Language exposing (..)
 import Generator exposing (..)
 import Dict exposing (Dict)
 import Set exposing (Set)
+import Dict exposing (foldl)
+import Set exposing (remove)
 
 type alias Language = { 
     vars : Set String,
@@ -144,36 +146,69 @@ skolemization lang formula =
     in
     skolemHelper lang (createGenerator lang.consts lang.funcs lang.vars) [] Dict.empty formula
 
+
+boundedVars : Formula -> Set String
+boundedVars formula =
+    case formula of
+        Exists x f -> Set.insert x (boundedVars f)
+        ForAll x f ->  Set.insert x (boundedVars f)
+        Predicate _ _ -> Set.empty
+        Negation f -> boundedVars f
+        Operation f1 _ f2 -> Set.union (boundedVars f1) (boundedVars f2) 
+
+varsInTerm : Term -> Set String
+varsInTerm term =
+    case term of
+        Constant _ -> Set.empty
+        Variable v -> Set.singleton v
+        Function _ terms -> List.foldr (\ x acc -> Set.union (varsInTerm x) acc) Set.empty terms
+
+freeVars : Formula -> Set String
+freeVars formula =
+    case formula of
+        Predicate _ terms -> List.foldr (\ x acc -> Set.union (varsInTerm x) acc) Set.empty terms
+        Negation f -> freeVars f
+        Operation f1 _ f2 -> Set.union (freeVars f1) (freeVars f2)
+        Exists x f -> Set.remove x (freeVars f)
+        ForAll x f -> Set.remove x (freeVars f)
+
 toPrenexNormalForm : Language -> Formula -> (Formula, Language)
 toPrenexNormalForm lang formula =
     let
-        removeShadowedHelper : Language -> Generator -> List String -> List String -> Dict String Term -> Formula -> (Formula, Language)
-        removeShadowedHelper l gen universalVars existentialVars substitutions f =
+        generatorWithout : Set String -> Language -> Generator
+        generatorWithout vars l = (createGenerator l.consts l.funcs (Set.union l.vars vars))
+        makeUniqueBounded : Language -> Formula -> Set String -> (Formula, Set String, Language)
+        makeUniqueBounded l f varsByFar =
             case f of
-                Predicate p terms -> (Predicate p (List.map (replaceInTerm substitutions) terms), l)
+                Predicate _ terms ->
+                    let vars = List.foldr (\ x acc -> Set.union (varsInTerm x) acc) Set.empty terms
+                    in (f, vars, l)
                 Negation f1 ->
-                    let (newF, newL) = (removeShadowedHelper l gen universalVars existentialVars substitutions f1)
-                    in (negate newF, newL)
+                    makeUniqueBounded l f1 varsByFar
                 Operation f1 op f2 ->
-                    let (newF1, newL1) = (removeShadowedHelper l gen universalVars existentialVars substitutions f1)
-                        (newF2, newL2) = (removeShadowedHelper l gen universalVars existentialVars substitutions f2)
-                    in (Operation newF1 op newF2, {l | vars = Set.union newL1.vars newL2.vars})
-                ForAll x f1 ->
-                    if List.member x universalVars then
-                        let (newVar, newGen) = getVar gen
-                            (newF, newL) = removeShadowedHelper l newGen (newVar :: universalVars) existentialVars (Dict.insert x (Variable newVar) substitutions) f1
-                        in (ForAll x newF, {newL | vars = Set.insert newVar newL.vars})
-                    else let (newF, newL) = removeShadowedHelper l gen (x :: universalVars) existentialVars substitutions f1
-                        in (ForAll x newF, newL)
+                    let (newF1, newVarsF1, newL1) = makeUniqueBounded l f1 varsByFar
+                        (newF2, newVarsF2, newL2) = makeUniqueBounded newL1 f2 newVarsF1                        
+                    in ((Operation newF1 op newF2), newVarsF2, newL2)
                 Exists x f1 ->
-                    if List.member x universalVars then
-                        let (newVar, newGen) = getVar gen
-                            (newF, newL) = removeShadowedHelper l newGen universalVars (newVar :: existentialVars) (Dict.insert x (Variable newVar) substitutions) f1
-                        in (Exists x newF, {newL | vars = Set.insert newVar newL.vars})
-                    else let (newF, newL) = removeShadowedHelper l gen universalVars (x :: universalVars) substitutions f1
-                        in (Exists x newF, newL)
-        removeShadowed : Language -> Formula -> (Formula, Language)
-        removeShadowed l f = removeShadowedHelper l (createGenerator lang.consts lang.funcs lang.vars) [] [] Dict.empty f
+                    if Set.member x varsByFar then
+                        let
+                            (newX, _) = getVar (generatorWithout varsByFar l)
+                            newL = {l | vars = Set.insert newX l.vars}
+                            newF1 = substituteVar x newX f1
+                            newVarsByFar = Set.insert newX varsByFar
+                        in ((Exists newX newF1), newVarsByFar, newL)
+                    else (f, Set.insert x varsByFar, l)
+                ForAll x f1 ->
+                    if Set.member x varsByFar then
+                        let
+                            (newX, _) = getVar (generatorWithout varsByFar l)
+                            newL = {l | vars = Set.insert newX l.vars}
+                            newF1 = substituteVar x newX f1
+                            newVarsByFar = Set.insert newX varsByFar
+                        in ((ForAll newX newF1), newVarsByFar, newL)
+                    else (f, Set.insert x varsByFar, l)
+        
+        -- pullQuantors : Formula -> Formula
 
         substituteVar : String -> String -> Formula -> Formula
         substituteVar var subVar f =
@@ -190,13 +225,7 @@ toPrenexNormalForm lang formula =
                 ForAll _ f1 -> removePrefixHelper f1
                 Exists _ f1 -> removePrefixHelper f1
                 _ -> f
-        
-        -- remove prefix
-        -- find one quantifier
-        -- get it in front
-        -- remove shadowed
-        -- repeat  
-    in
+    in 
     Debug.todo "pnf"
 
 
