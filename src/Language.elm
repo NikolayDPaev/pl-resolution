@@ -167,9 +167,16 @@ freeVars formula =
         Operation f1 _ f2 -> Set.union (freeVars f1) (freeVars f2)
         Quantification _ x f ->  Set.remove x (freeVars f)
 
-toPrenexNormalForm : Language -> Formula -> (Formula, Language)
-toPrenexNormalForm lang formula =
+toPNF : Language -> Formula -> (Formula, Language)
+toPNF lang formula =
     let
+        substituteVar : String -> String -> Formula -> Formula
+        substituteVar var subVar f =
+            case f of
+                Predicate p terms -> Predicate p (List.map (replaceInTerm (Dict.singleton var (Variable subVar))) terms)
+                Negation f1 -> negate (substituteVar var subVar f1)
+                Operation f1 op f2 -> (Operation (substituteVar var subVar f1) op (substituteVar var subVar f2))
+                Quantification q x f1 -> Quantification q x (substituteVar var subVar f1)
         generatorWithout : Set String -> Language -> Generator
         generatorWithout vars l = (createGenerator l.consts l.funcs (Set.union l.vars vars))
         makeUniqueBounded : Language -> Formula -> Set String -> (Formula, Set String, Language)
@@ -194,28 +201,46 @@ toPrenexNormalForm lang formula =
                         in ((Quantification q newX newF1), newVarsByFar, newL)
                     else (f, Set.insert x varsByFar, l)
         
-        -- pullQuantors : Formula -> Formula
-
-        substituteVar : String -> String -> Formula -> Formula
-        substituteVar var subVar f =
+        pullQuantors : Formula -> Formula
+        pullQuantors f =
             case f of
-                Predicate p terms -> Predicate p (List.map (replaceInTerm (Dict.singleton var (Variable subVar))) terms)
-                Negation f1 -> negate (substituteVar var subVar f1)
-                Operation f1 op f2 -> (Operation (substituteVar var subVar f1) op (substituteVar var subVar f2))
-                Quantification q x f1 -> Quantification q x (substituteVar var subVar f1)
-
-        removePrefixHelper : Formula -> Formula
-        removePrefixHelper f =
-            case f of 
-                Quantification _ _ f1 -> removePrefixHelper f1
+                Negation (Quantification q x f1) -> Quantification q x (Negation (pullQuantors f1))
+                Negation f1 -> Negation (pullQuantors f1)
+                Operation (Quantification q1 x1 f1) op (Quantification q2 x2 f2) ->
+                    Quantification q1 x1 (Quantification q2 x2 (Operation (pullQuantors f1) op (pullQuantors f2)))
+                Operation (Quantification q1 x1 f1) op f2 ->
+                    Quantification q1 x1 (Operation (pullQuantors f1) op (pullQuantors f2))
+                Operation f1 op (Quantification q2 x2 f2) ->
+                    Quantification q2 x2 (Operation (pullQuantors f1) op (pullQuantors f2))
+                Operation f1 op f2 -> Operation (pullQuantors f1) op (pullQuantors f2)
                 _ -> f
+    
+        (uniqueBoundedF, _, finalL) = makeUniqueBounded lang formula Set.empty
     in 
-    Debug.todo "pnf"
+    (pullQuantors uniqueBoundedF, finalL)
 
+-- in order to be correct, the provided formula must not have implication and equivalences
+pNFtoCNF : Formula -> Formula
+pNFtoCNF formula = 
+    let
+        noQuantorsToCNF : Formula -> Formula
+        noQuantorsToCNF formula_ =
+            case formula_ of
+                Operation f1 And f2 -> Operation (noQuantorsToCNF f1) And (noQuantorsToCNF f2)
+                Operation f1 Or f2 -> distribute (noQuantorsToCNF f1) (noQuantorsToCNF f2)
+                _ -> formula_
 
--- to CNF
--- to PNF
--- to List of Disjuncts 
+        distribute : Formula -> Formula -> Formula
+        distribute f1_ f2_ =
+            case (f1_, f2_) of
+                ((Operation f11 And f12), f2) -> Operation (distribute f11 f2) And (distribute f12 f2)
+                (f1, (Operation f21 And f22)) -> Operation (distribute f1 f21) And (distribute f1 f22)
+                (f1, f2) -> Operation f1 Or f2
+    in
+    case formula of
+        Quantification q x f -> Quantification q x (pNFtoCNF f)
+        _ -> formula
+
 
 type Literal
     = PositivePredicate String (List Term)
@@ -243,3 +268,35 @@ negateLiteral l =
             NegativePredicate p terms
         NegativePredicate p terms ->
             PositivePredicate p terms
+
+-- input must be formula with quantor prefix and matrix in CNF
+toListOfDisjuncts : Formula -> List Disjunct
+toListOfDisjuncts formula =
+    let
+        removeQuantorPrefix : Formula -> Formula
+        removeQuantorPrefix f =
+            case f of
+                Quantification _ _ f1 -> removeQuantorPrefix f1
+                _ -> f
+
+        literalToDisjunct : Formula -> Disjunct
+        literalToDisjunct f =
+            case f of
+                Predicate p terms -> [PositivePredicate p terms]
+                Negation (Predicate p terms) -> [NegativePredicate p terms]
+                _ -> []
+
+        cnfToListOfDisjuncts : Formula -> List Disjunct
+        cnfToListOfDisjuncts f =
+            case f of 
+                Operation f1 And f2 -> List.append (cnfToListOfDisjuncts f1) (cnfToListOfDisjuncts f2)
+                Operation f1 Or f2 -> 
+                    case (cnfToListOfDisjuncts f1, cnfToListOfDisjuncts f2) of
+                        ([d1], [d2]) -> [List.append d1 d2]
+                        _ -> []
+                _ -> [literalToDisjunct f]
+
+    in
+    formula
+    |> removeQuantorPrefix
+    |> cnfToListOfDisjuncts
