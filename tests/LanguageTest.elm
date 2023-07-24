@@ -34,7 +34,7 @@ printTest =
         test "quantors" (\_ ->
             Expect.equal
             "∀x ∃y (∀z p(z, y) ⇒ p(z, x))"
-            (printFormula (ForAll "x" (Exists "y" (Operation (ForAll "z" (Predicate "p" [Variable "z", Variable "y"])) Impl (Predicate "p" [Variable "z", Variable "x"])))))
+            (printFormula (Quantification ForAll "x" ( Quantification Exists "y" (Operation (Quantification ForAll "z" (Predicate "p" [Variable "z", Variable "y"])) Impl (Predicate "p" [Variable "z", Variable "x"])))))
         )
     ]
 
@@ -121,21 +121,21 @@ moveNegationsTest =
         ),
         test "ForAll and Exist"  (\_ ->
             Expect.equal
-            (Exists "x" 
-                    (ForAll "y"
+            (Quantification Exists "x" 
+                    (Quantification ForAll "y"
                         (Operation 
                         (Negation (Predicate "p" [Constant "a"]))
                         And
-                        (ForAll "y"
-                        (Exists "z" (Predicate "p" [Constant "a"]))))))
+                        (Quantification ForAll "y"
+                        (Quantification Exists "z" (Predicate "p" [Constant "a"]))))))
             (moveNegations 
-                (Negation (ForAll "x" 
-                    (Exists "y"
+                (Negation (Quantification ForAll "x" 
+                    (Quantification Exists "y"
                         (Operation 
                         (Predicate "p" [Constant "a"])
                         Or
-                        (Exists "y"
-                        (ForAll "z" (Negation (Predicate "p" [Constant "a"]))))))))
+                        (Quantification Exists "y"
+                        (Quantification ForAll "z" (Negation (Predicate "p" [Constant "a"]))))))))
             )
         )
     ]
@@ -154,22 +154,22 @@ skolemizationTest =
                 Impl
                 (Predicate "q" [Constant "c"])), {lang | consts = Set.insert "c" lang.consts})
             (skolemization lang 
-                (Exists "x" (Operation 
+                (Quantification Exists "x" (Operation 
                     (Predicate "p" [Variable "x"])
                     Impl
                     (Predicate "q" [Variable "x"]))))
         ),
         test "MultipleDependencies" (\_ ->
             Expect.equal
-            ((ForAll "y" (Operation
+            ((Quantification ForAll "y" (Operation
                 (Predicate "p" [Function "h" [Variable "y"]])
                 Impl
                 (Predicate "q" [Function "h" [Variable "y"], Function "i" [Variable "y"]]))),
             {lang | funcs = Set.union (Set.fromList ["h", "i"]) lang.funcs})
             (skolemization lang 
-                (ForAll "y" (Exists "x" (Operation
+                (Quantification ForAll "y" (Quantification Exists "x" (Operation
                     (Predicate "p" [Variable "x"])
                     Impl
-                    (Exists "z" (Predicate "q" [Variable "x", Variable "z"]))))))
+                    (Quantification Exists "z" (Predicate "q" [Variable "x", Variable "z"]))))))
         )
     ]

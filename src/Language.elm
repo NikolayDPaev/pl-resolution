@@ -3,8 +3,6 @@ module Language exposing (..)
 import Generator exposing (..)
 import Dict exposing (Dict)
 import Set exposing (Set)
-import Dict exposing (foldl)
-import Set exposing (remove)
 
 type alias Language = { 
     vars : Set String,
@@ -40,12 +38,13 @@ printOp op =
         Impl -> "⇒"
         Eqv -> "⇔"
 
+type Quantor = Exists | ForAll
+
 type Formula
     = Predicate String (List Term)
     | Negation Formula
     | Operation Formula Op Formula
-    | Exists String Formula
-    | ForAll String Formula
+    | Quantification Quantor String Formula
 
 printFormula : Formula -> String
 printFormula f =
@@ -55,8 +54,8 @@ printFormula f =
             list -> p ++ "(" ++ String.dropRight 2 list ++ ")"
         Negation f1 -> "¬" ++ printFormula f1
         Operation f1 op f2 -> "(" ++ printFormula f1 ++ " " ++ printOp op ++ " " ++ printFormula f2 ++ ")"
-        Exists x f1 -> "∃" ++ x ++ " " ++ printFormula f1
-        ForAll x f1 -> "∀" ++ x ++ " " ++ printFormula f1
+        Quantification Exists x f1 -> "∃" ++ x ++ " " ++ printFormula f1
+        Quantification ForAll x f1 -> "∀" ++ x ++ " " ++ printFormula f1
 
 negate : Formula -> Formula
 negate f =
@@ -77,8 +76,7 @@ eliminateImplAndEqv formula =
                 Eqv -> Operation (Operation (negate newA) Or newB) And (Operation newA Or (negate newB))
                 _ -> Operation newA op newB
         Negation f -> negate (eliminateImplAndEqv f)
-        Exists x f -> Exists x (eliminateImplAndEqv f)
-        ForAll x f -> ForAll x (eliminateImplAndEqv f)
+        Quantification q x f -> Quantification q x (eliminateImplAndEqv f)
         _ -> formula
 
 moveNegations : Formula -> Formula
@@ -99,13 +97,12 @@ moveNegations outerFormula =
                         Eqv ->
                             Operation (moveNegations (negate a)) Eqv (moveNegations b)
                 
-                Exists x f -> ForAll x (moveNegations (negate f))
-                ForAll x f -> Exists x (moveNegations (negate f))
+                Quantification Exists x f -> Quantification ForAll x (moveNegations (negate f))
+                Quantification ForAll x f -> Quantification Exists x (moveNegations (negate f))
 
         Predicate _ _ -> outerFormula
         Operation a op b -> Operation (moveNegations a) op (moveNegations b)
-        Exists x f -> Exists x (moveNegations f)
-        ForAll x f -> ForAll x (moveNegations f)
+        Quantification q x f -> Quantification q x (moveNegations f)
 
 replaceInTerm : Dict String Term -> Term -> Term
 replaceInTerm substitutions term =
@@ -131,10 +128,10 @@ skolemization lang formula =
                     let (newF1, newL1) = (skolemHelper l gen dependencies substitutions f1)
                         (newF2, newL2) = (skolemHelper l gen dependencies substitutions f2)
                     in (Operation newF1 op newF2, {l | consts = Set.union newL1.consts newL2.consts, funcs = Set.union newL1.funcs newL2.funcs})
-                ForAll x f1 ->
+                Quantification ForAll x f1 ->
                     let (newF, newL) = (skolemHelper l gen (x :: dependencies) substitutions f1)
-                    in (ForAll x newF, newL)
-                Exists x f1 -> 
+                    in (Quantification ForAll x newF, newL)
+                Quantification Exists x f1 -> 
                     let (newTerm, newGen) = if List.isEmpty dependencies then Tuple.mapFirst Constant (getConst gen)
                             else Tuple.mapFirst (\ funcName -> Function funcName (List.map Variable dependencies)) (getFunc gen)
                         (newF, newL) = skolemHelper l newGen dependencies (Dict.insert x newTerm substitutions) f1
@@ -150,11 +147,10 @@ skolemization lang formula =
 boundedVars : Formula -> Set String
 boundedVars formula =
     case formula of
-        Exists x f -> Set.insert x (boundedVars f)
-        ForAll x f ->  Set.insert x (boundedVars f)
         Predicate _ _ -> Set.empty
         Negation f -> boundedVars f
         Operation f1 _ f2 -> Set.union (boundedVars f1) (boundedVars f2) 
+        Quantification _ x f ->  Set.insert x (boundedVars f)
 
 varsInTerm : Term -> Set String
 varsInTerm term =
@@ -169,8 +165,7 @@ freeVars formula =
         Predicate _ terms -> List.foldr (\ x acc -> Set.union (varsInTerm x) acc) Set.empty terms
         Negation f -> freeVars f
         Operation f1 _ f2 -> Set.union (freeVars f1) (freeVars f2)
-        Exists x f -> Set.remove x (freeVars f)
-        ForAll x f -> Set.remove x (freeVars f)
+        Quantification _ x f ->  Set.remove x (freeVars f)
 
 toPrenexNormalForm : Language -> Formula -> (Formula, Language)
 toPrenexNormalForm lang formula =
@@ -189,23 +184,14 @@ toPrenexNormalForm lang formula =
                     let (newF1, newVarsF1, newL1) = makeUniqueBounded l f1 varsByFar
                         (newF2, newVarsF2, newL2) = makeUniqueBounded newL1 f2 newVarsF1                        
                     in ((Operation newF1 op newF2), newVarsF2, newL2)
-                Exists x f1 ->
+                Quantification q x f1 ->
                     if Set.member x varsByFar then
                         let
                             (newX, _) = getVar (generatorWithout varsByFar l)
                             newL = {l | vars = Set.insert newX l.vars}
                             newF1 = substituteVar x newX f1
                             newVarsByFar = Set.insert newX varsByFar
-                        in ((Exists newX newF1), newVarsByFar, newL)
-                    else (f, Set.insert x varsByFar, l)
-                ForAll x f1 ->
-                    if Set.member x varsByFar then
-                        let
-                            (newX, _) = getVar (generatorWithout varsByFar l)
-                            newL = {l | vars = Set.insert newX l.vars}
-                            newF1 = substituteVar x newX f1
-                            newVarsByFar = Set.insert newX varsByFar
-                        in ((ForAll newX newF1), newVarsByFar, newL)
+                        in ((Quantification q newX newF1), newVarsByFar, newL)
                     else (f, Set.insert x varsByFar, l)
         
         -- pullQuantors : Formula -> Formula
@@ -216,14 +202,12 @@ toPrenexNormalForm lang formula =
                 Predicate p terms -> Predicate p (List.map (replaceInTerm (Dict.singleton var (Variable subVar))) terms)
                 Negation f1 -> negate (substituteVar var subVar f1)
                 Operation f1 op f2 -> (Operation (substituteVar var subVar f1) op (substituteVar var subVar f2))
-                ForAll x f1 -> ForAll x (substituteVar var subVar f1)
-                Exists x f1 -> Exists x (substituteVar var subVar f1)
+                Quantification q x f1 -> Quantification q x (substituteVar var subVar f1)
 
         removePrefixHelper : Formula -> Formula
         removePrefixHelper f =
             case f of 
-                ForAll _ f1 -> removePrefixHelper f1
-                Exists _ f1 -> removePrefixHelper f1
+                Quantification _ _ f1 -> removePrefixHelper f1
                 _ -> f
     in 
     Debug.todo "pnf"

@@ -57,7 +57,7 @@ predTests =
     describe "Predicate logic tests" [
         test "quantors" (\_ ->
             Expect.equal
-            (Ok (ForAll "x" (Exists "y" (Operation (ForAll "z" (Predicate "p" [Variable "z", Variable "y"])) Impl (Predicate "p" [Variable "z", Variable "x"])))))
+            (Ok (Quantification ForAll "x" (Quantification Exists "y" (Operation (Quantification ForAll "z" (Predicate "p" [Variable "z", Variable "y"])) Impl (Predicate "p" [Variable "z", Variable "x"])))))
             (Parser.parse lang "∀x∃y(∀z p(z, y)) ⇒ p(z, x)")
         ),
         test "Expected a variable" (\_ ->

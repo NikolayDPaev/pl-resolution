@@ -143,14 +143,14 @@ parseFormula tokens =
                 ForAll :: Var x :: rest -> 
                     case parseFormula rest of
                         Ok (f, restTokens) -> 
-                            Ok (L.ForAll x f, restTokens)
+                            Ok (L.Quantification L.ForAll x f, restTokens)
                         Err e -> Err e
                 ForAll :: t :: _ -> 
                     Err (ExpectedVariable (toString t))
                 Exists :: Var x :: rest -> 
                     case parseFormula rest of
                         Ok (f, restTokens) -> 
-                            Ok (L.Exists x f, restTokens)
+                            Ok (L.Quantification L.Exists x f, restTokens)
                         Err e -> Err e
                 Exists :: t :: _ -> 
                     Err (ExpectedVariable (toString t))
