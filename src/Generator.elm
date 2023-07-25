@@ -64,6 +64,6 @@ getVar generator =
                 else (String.dropRight 1 var) ++ String.fromChar (Char.fromCode (Char.toCode lastLetter + 1))
         newGenerator = {generator | stateVars = List.append newState [newVar]}
     in
-    if Set.member var generator.forbiddenConsts then 
+    if Set.member var generator.forbiddenVars then 
         getVar newGenerator
     else (var, newGenerator)
