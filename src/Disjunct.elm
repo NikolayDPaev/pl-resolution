@@ -24,4 +24,14 @@ equal : Disjunct -> Disjunct -> Bool
 equal = Set.Any.equal
 
 singleton : Literal -> Disjunct
-singleton l= Set.Any.singleton l literalToString
+singleton l = Set.Any.singleton l literalToString
+
+toList : Disjunct -> List Literal
+toList = Set.Any.toList
+
+remove : Literal -> Disjunct -> Disjunct
+remove = Set.Any.remove
+
+map : (Literal -> Literal) -> Disjunct -> Disjunct
+map f d = Set.Any.map literalToString f d
+

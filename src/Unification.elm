@@ -1,4 +1,4 @@
-module Unification exposing (..)
+module Unification exposing (unification, Substitution, replaceInLiteral, subToString)
 
 import Dict exposing (Dict)
 import Set
@@ -7,8 +7,15 @@ import Language exposing (Term(..))
 import Language exposing (Literal(..))
 import Language exposing (varsInTerm)
 import Transformations exposing (replaceInTerm)
+import Language exposing (printTerm)
 
 type alias Substitution =  Dict String Term
+
+subToString : Substitution -> String
+subToString sub =
+    let
+       listOfSubs = Dict.toList sub
+    in "{" ++ String.dropRight 2 (List.foldl (\ (x, t) acc -> acc ++ x ++ "/" ++ printTerm t ++ ", ") "" listOfSubs) ++ "}"
 
 type Difference
     = Equal
@@ -45,6 +52,12 @@ firstDifferenceOfTerms t1 t2 =
 replaceInListTerms : Substitution -> List Term -> List Term
 replaceInListTerms sub list =
     List.map (replaceInTerm sub) list
+
+replaceInLiteral : Substitution -> Literal -> Literal
+replaceInLiteral sub l =
+    case l of
+        PositivePredicate name terms -> PositivePredicate name (replaceInListTerms sub terms)
+        NegativePredicate name terms -> NegativePredicate name (replaceInListTerms sub terms)
 
 unification : Literal -> Literal -> Maybe Substitution
 unification p q = 
