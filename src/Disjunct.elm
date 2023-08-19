@@ -20,6 +20,9 @@ toString d =
 empty : Disjunct
 empty = Set.Any.empty literalToString
 
+isEmpty : Disjunct -> Bool
+isEmpty = Set.Any.isEmpty
+
 equal : Disjunct -> Disjunct -> Bool
 equal = Set.Any.equal
 

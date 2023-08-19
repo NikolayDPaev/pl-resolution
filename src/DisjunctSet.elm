@@ -25,3 +25,9 @@ empty = Set.Any.empty Disjunct.toString
 
 equal : DisjunctSet -> DisjunctSet -> Bool
 equal = Set.Any.equal
+
+insert : Disjunct -> DisjunctSet -> DisjunctSet
+insert = Set.Any.insert
+
+any : (Disjunct -> Bool) -> DisjunctSet -> Bool
+any = Set.Any.any
