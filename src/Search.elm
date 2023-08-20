@@ -4,6 +4,8 @@ import Disjunct
 import DisjunctSet exposing (DisjunctSet)
 import ResolutionStep exposing (LogEntry, resolvents, colapses)
 import PriorityQueue exposing (PriorityQueue)
+import PairsHelperFunctions exposing (..)
+import Heuristic exposing (..)
 
 type alias Node =
     { disjuncts : DisjunctSet
@@ -13,18 +15,12 @@ type alias Node =
 
 hScore : Node -> Int
 hScore node =
-    Debug.todo "heuristic function"
+    minPseudoResolutionSteps node.disjuncts
 
 generateChildren : Node -> List Node
 generateChildren node = 
     let
         disjuncts = DisjunctSet.toList node.disjuncts
-        subsetsOf2 : List a -> List (a, a)
-        subsetsOf2 list =
-            case list of
-                [] -> []
-                x :: xs ->
-                    List.map (\y -> (x, y)) xs ++ subsetsOf2 xs
     in
     subsetsOf2 disjuncts
         |> List.concatMap (\ (d1, d2) -> resolvents d1 d2)

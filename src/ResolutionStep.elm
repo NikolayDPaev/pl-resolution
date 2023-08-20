@@ -2,6 +2,7 @@ module ResolutionStep exposing (..)
 
 import Disjunct exposing (Disjunct)
 import Unification exposing (unification, Substitution, replaceInLiteral, subToString)
+import PairsHelperFunctions exposing (..)
 
 type LogEntry
     = Res Disjunct Disjunct Substitution Disjunct
@@ -17,10 +18,6 @@ resolvents d1 d2 =
     let
         d1List = Disjunct.toList d1
         d2List = Disjunct.toList d2
-
-        allPairs : List a -> List b -> List (a, b)
-        allPairs list1 list2 =
-            List.concatMap (\x -> List.map (\y -> (x, y)) list2) list1
     in
     allPairs d1List d2List
         |> List.foldr (\ (l1, l2) acc ->
@@ -41,12 +38,6 @@ colapses : Disjunct -> List (Disjunct, LogEntry)
 colapses d =
     let
         dList = Disjunct.toList d
-        subsetsOf2 : List a -> List (a, a)
-        subsetsOf2 list =
-            case list of
-                [] -> []
-                x :: xs ->
-                    List.map (\y -> (x, y)) xs ++ subsetsOf2 xs
     in
     subsetsOf2 dList
         |> List.foldr (\ (l1, l2) acc ->
