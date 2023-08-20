@@ -5,7 +5,6 @@ import DisjunctSet exposing (DisjunctSet)
 import ResolutionStep exposing (LogEntry, resolvents, colapses)
 import PriorityQueue exposing (PriorityQueue)
 import PairsHelperFunctions exposing (..)
-import Heuristic exposing (..)
 
 type alias Node =
     { disjuncts : DisjunctSet
@@ -13,9 +12,16 @@ type alias Node =
     , log : List LogEntry
     }
 
+-- simple heuristic that finds the minimum size of disjunct
 hScore : Node -> Int
 hScore node =
-    minPseudoResolutionSteps node.disjuncts
+    DisjunctSet.foldl (\ d1 min ->
+        let
+            d1Size = Disjunct.size d1
+        in 
+        if d1Size < min then d1Size else min
+    ) (2^53 - 1) node.disjuncts
+    --minPseudoResolutionSteps node.disjuncts
 
 generateChildren : Node -> List Node
 generateChildren node = 

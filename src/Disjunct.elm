@@ -38,3 +38,5 @@ remove = Set.Any.remove
 map : (Literal -> Literal) -> Disjunct -> Disjunct
 map f d = Set.Any.map literalToString f d
 
+size : Disjunct -> Int
+size = Set.Any.size
