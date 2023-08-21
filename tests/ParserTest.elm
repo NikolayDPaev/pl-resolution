@@ -49,7 +49,6 @@ propLogicTests =
             (Err (PredicateInTerm "p"))
             (Parser.parse lang "(p(a, b) ⇔ ¬q(f(p))) ⇒ ¬q (g(y, f(c, x)))")
         )
-
     ]
 
 predTests : Test

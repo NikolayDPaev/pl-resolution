@@ -14,3 +14,8 @@ allPairs list1 list2 =
 listOfMaybesToMaybeList : List (Maybe a) -> Maybe (List a)
 listOfMaybesToMaybeList listOfMaybes =
     List.foldr (Maybe.map2 (::)) (Just []) listOfMaybes
+
+listOfResultToResultList : List (Result e a) -> Result e (List a)
+listOfResultToResultList listOfResults =
+    List.foldr (Result.map2 (::)) (Ok []) listOfResults
+

@@ -3,7 +3,6 @@ module Main exposing (..)
 import Parser
 import Language exposing (..)
 import Transformations exposing (..)
-import Disjunct
 import DisjunctSet exposing (DisjunctSet)
 import Search exposing (..)
 import ResolutionStep exposing (logEntryToString)
@@ -57,25 +56,40 @@ type Msg
 update : Msg -> Model -> Model
 update msg model =
     let
+        modelLanguage = model.language
         parseLanguageSet : String -> Set String
         parseLanguageSet str =
             str 
                 |> String.split ","
                 |> List.map String.trim
                 |> Set.fromList
+
+        updateAtIndex : Int -> a -> List a -> List a
+        updateAtIndex index value =
+            List.indexedMap (\ i el -> if i == index then value else el)
+
+        updateAllFormulas : Model -> Model
+        updateAllFormulas m =
+            m.formulaStrings
+            |> List.map Tuple.first
+            |> List.indexedMap Tuple.pair
+            |> List.foldl
+                (\ (index, formula) newModel -> 
+                    update (UpdateFormula index formula) newModel)
+                m
     in
     case msg of
         UpdateConstants value ->
-            { model | constants = value, language = {consts = parseLanguageSet value, vars = model.language.vars, preds = model.language.preds, funcs = model.language.funcs}}
+            { model | constants = value, language = {modelLanguage | consts = parseLanguageSet value}} |> updateAllFormulas
 
         UpdateVariables value ->
-            { model | variables = value, language = {consts = model.language.consts, vars = parseLanguageSet value, preds = model.language.preds, funcs = model.language.funcs}}
+            { model | variables = value, language = {modelLanguage | vars = parseLanguageSet value}} |> updateAllFormulas
 
         UpdateFunctions value ->
-            { model | functions = value, language = {consts = model.language.consts, vars = model.language.vars, preds = model.language.preds, funcs = parseLanguageSet value}}
+            { model | functions = value, language = {modelLanguage | funcs = parseLanguageSet value}} |> updateAllFormulas
 
         UpdatePredicates value ->
-            { model | predicates = value, language = {consts = model.language.consts, vars = model.language.vars, preds = parseLanguageSet value, funcs = model.language.funcs}}
+            { model | predicates = value, language = {modelLanguage | preds = parseLanguageSet value}} |> updateAllFormulas
 
         AddFormula -> { 
                 model |
@@ -86,11 +100,11 @@ update msg model =
         UpdateFormula index formulaString ->
             case Parser.parse model.language formulaString of
                 Ok formula -> { 
-                    model | formulas = List.indexedMap (\ i el -> if i == index then Just formula else el) model.formulas, 
-                            formulaStrings =  List.indexedMap (\ i el -> if i == index then (formulaString, "") else el) model.formulaStrings
+                    model | formulas = updateAtIndex index (Just formula) model.formulas, 
+                            formulaStrings = updateAtIndex index (formulaString, "") model.formulaStrings
                     }
                 Err error -> {
-                    model | formulaStrings = List.indexedMap (\ i el -> if i == index then (formulaString, Parser.errToString error ++ printLanguage model.language) else el) model.formulaStrings
+                    model | formulaStrings = updateAtIndex index (formulaString, Parser.errToString error) model.formulaStrings
                     }
                 
         StartTransformations ->
@@ -132,7 +146,7 @@ update msg model =
                         ++ line7 :: if lString /= l2String then [" Language is updated to " ++ l2String] else []
                     )
                 
-                clearedModel = { model | transformedFormulasText = [], transformationResult = "", language = Language.empty }
+                clearedModel = { model | transformedFormulasText = [["Transformations: "]], transformationResult = "", language = Language.empty }
                 (newModel, finalDisjunctSet) =
                     case listOfMaybesToMaybeList model.formulas of
                         Just formulas ->
@@ -168,43 +182,37 @@ view model =
             ]
         , div [ class "section" ]
             [ div [ class "label" ] [ text "Formulas:" ]
-            , div [] (List.concat (List.indexedMap (\ index (formula, error) -> [
-                    input [ placeholder ("Formula " ++ (String.fromInt (index + 1))), value formula, onInput (UpdateFormula index) ] [],
-                    span [class "error"] [text error]
-                ]) model.formulaStrings))
+            , div [] 
+                (List.concat (List.indexedMap
+                    (\ index (formula, error) -> [
+                        div [] [
+                            input [ placeholder ("Formula " ++ (String.fromInt (index + 1))), value formula, onInput (UpdateFormula index) ] [],
+                            span [class "error"] [text error]
+                        ]
+                    ])
+                    model.formulaStrings
+                ))
             , button [ onClick AddFormula ] [ text "Add Formula" ]
             ]
         , button [ onClick StartTransformations ] [ text "Make Transformations" ]
-        , button [ onClick StartResolution ] [ text "Apply Resolution" ]
         , div [ class "result" ] 
-            [ div [class "label"] [ text "Transformations:"]
-            , div [] (List.concat (List.indexedMap (\ index formulaLines -> [
-                    div [class "label"] [text ("Formula #" ++ (String.fromInt index))], 
-                    div [] (List.map (\ step -> div [class "result"] [text step]) formulaLines)
-                ]) model.transformedFormulasText))
+            [ div []
+                (List.concat (List.indexedMap
+                    (\ index formulaLines -> [
+                        div [class "label"] [text ("Formula #" ++ (String.fromInt index))], 
+                        div [] (List.map (\ step -> div [class "result"] [text step]) formulaLines)
+                    ])
+                    model.transformedFormulasText
+                ))
             , div [] [text model.transformationResult]
             ]
+        , button [ onClick StartResolution ] [ text "Apply Resolution" ]
         , div [ class "result" ]
             [ div [] (List.map (\ step -> div [class "result"] [text step]) model.resolutionSteps)]
         ]
 
+main : Program () Model Msg
 main =
     Browser.sandbox { init = init, update = update, view = view }
-
-algorithm : List String
-algorithm = 
-    let
-        -- {{p(y, z), r(y)}, {q(a, y), s(y)}, {r(y), ¬s(z)}, {¬p(f(y), t), ¬q(y, t)}, {¬r(f(y))}}
-        disjuncts = DisjunctSet.fromList [
-            Disjunct.fromList [PositivePredicate "p" [Variable "y", Variable "z"], PositivePredicate "r" [Variable "y"]],
-            Disjunct.fromList [PositivePredicate "q" [Constant "a", Variable "y"], PositivePredicate "s" [Variable "y"]],
-            Disjunct.fromList [PositivePredicate "r" [Variable "y"], NegativePredicate "s" [Variable "z"]],
-            Disjunct.fromList [NegativePredicate "p" [Function "f" [Variable "y"], Variable "t"], NegativePredicate "q" [Variable "y", Variable "t"]],
-            Disjunct.fromList [NegativePredicate "r" [Function "f" [Variable "y"]]]
-            ]
-    in
-    resolutionMethod disjuncts
-        |> Maybe.map (List.map logEntryToString)
-        |> Maybe.withDefault []
 
     

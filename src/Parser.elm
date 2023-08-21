@@ -3,6 +3,7 @@ import Language exposing (Language)
 import Language as L exposing (..)
 
 import Set
+import ListHelperFunctions exposing (listOfResultToResultList)
 
 type ParseError
     = ExpectedRightBracket
@@ -46,7 +47,7 @@ toString token =
         Comma -> ","
 
 
-tokenizer : Language -> String -> List Token
+tokenizer : Language -> String -> Result ParseError (List Token)
 tokenizer lang str = 
     let basicTokens = String.foldr (\el acc ->
             case el of
@@ -77,12 +78,14 @@ tokenizer lang str =
         |> List.map (\token -> -- map words to specific terms
             case token of
             Var string ->
-                if Set.member string lang.consts then Const string
-                else if Set.member string lang.funcs then Func string
-                else if Set.member string lang.preds then Pred string
-                else Var string
-            _ -> token
+                if Set.member string lang.consts then Ok (Const string)
+                else if Set.member string lang.funcs then Ok (Func string)
+                else if Set.member string lang.preds then Ok (Pred string)
+                else if Set.member string lang.vars then Ok (Var string)
+                else Err (UnexpectedToken string)
+            _ -> Ok token
         ) 
+        |> listOfResultToResultList
 
 parseTerm : List Token -> Result ParseError (Term, List Token)
 parseTerm tokens =
@@ -179,7 +182,7 @@ parseFormula tokens =
         
 parse : Language -> String -> Result ParseError Formula
 parse lang string =
-    case parseFormula (tokenizer lang string) of
+    case (tokenizer lang string) |> Result.andThen parseFormula of
         Ok (formula, []) -> Ok formula
         Ok (_, x :: _) -> Err (UnexpectedToken (toString x))
         Err e -> Err e
@@ -187,8 +190,8 @@ parse lang string =
 errToString : ParseError -> String
 errToString err =
     case err of
-        ExpectedRightBracket -> "Right bracket expected"
+        ExpectedRightBracket -> "Unbalanced parentheses"
         PredicateInTerm str -> "Predicate " ++ str ++ " cannot be in term"
-        UnexpectedToken str ->  "Unexpected token " ++ str
+        UnexpectedToken str ->  "Unexpected symbol " ++ str
         ExpectedVariable str -> str ++ " must be a variable"
         UnexpectedEnd -> "Unexpected end of input"
