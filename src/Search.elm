@@ -4,7 +4,7 @@ import Disjunct
 import DisjunctSet exposing (DisjunctSet)
 import ResolutionStep exposing (LogEntry, resolvents, colapses)
 import PriorityQueue exposing (PriorityQueue)
-import PairsHelperFunctions exposing (..)
+import ListHelperFunctions exposing (..)
 
 type alias Node =
     { disjuncts : DisjunctSet

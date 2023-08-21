@@ -8,6 +8,7 @@ import Language exposing (..)
 import Transformations exposing (..)
 import DisjunctSet
 import Disjunct
+import Html.Attributes exposing (lang)
 
 printTest : Test
 printTest = describe "Printing tests" [
@@ -229,6 +230,34 @@ toPNFTest =
                         And
                         (Quantification ForAll "x" (Predicate "p" [Variable "x", Variable "x"]))
                     )))))
+            )
+        ),
+        test "pull quantors" (\_ ->
+            let 
+                lang1 = { consts = Set.fromList [], funcs = Set.fromList ["g"], preds = Set.fromList ["p","q", "r"], vars = Set.fromList ["x","y","t"] }
+            in
+            Expect.equal
+            ((Quantification ForAll "y"
+                (Quantification ForAll "t"
+                    (Operation 
+                        (Negation (Predicate "r" [Function "g" [Variable "y"]])) 
+                        And  
+                            (Operation 
+                                (Negation (Predicate "p" [Function "g" [Variable "y"],Variable "t"]))
+                                Or 
+                                (Negation (Predicate "q" [Variable "y",Variable "t"])))))
+                ), lang1)
+            (toPNF lang1
+            (Quantification ForAll "y"
+                (Operation 
+                    (Negation (Predicate "r" [Function "g" [Variable "y"]])) 
+                    And 
+                    (Quantification ForAll "t" 
+                        (Operation 
+                            (Negation (Predicate "p" [Function "g" [Variable "y"],Variable "t"]))
+                            Or 
+                            (Negation (Predicate "q" [Variable "y",Variable "t"])))))
+                )
             )
         )
     ]

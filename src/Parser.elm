@@ -1,4 +1,4 @@
-module Parser exposing (parse, ParseError(..))
+module Parser exposing (parse, ParseError(..), errToString)
 import Language exposing (Language)
 import Language as L exposing (..)
 
@@ -183,3 +183,12 @@ parse lang string =
         Ok (formula, []) -> Ok formula
         Ok (_, x :: _) -> Err (UnexpectedToken (toString x))
         Err e -> Err e
+
+errToString : ParseError -> String
+errToString err =
+    case err of
+        ExpectedRightBracket -> "Right bracket expected"
+        PredicateInTerm str -> "Predicate " ++ str ++ " cannot be in term"
+        UnexpectedToken str ->  "Unexpected token " ++ str
+        ExpectedVariable str -> str ++ " must be a variable"
+        UnexpectedEnd -> "Unexpected end of input"

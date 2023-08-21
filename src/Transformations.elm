@@ -153,6 +153,7 @@ toPNF lang formula =
                 Operation f1 op (Quantification q2 x2 f2) ->
                     Quantification q2 x2 (pullQuantors (Operation (pullQuantors f1) op (pullQuantors f2)))
                 Operation f1 op f2 -> Operation (pullQuantors f1) op (pullQuantors f2)
+                Quantification q x f1 -> Quantification q x (pullQuantors f1)
                 _ -> f
     
         (uniqueBoundedF, _, modifiedL) = makeUniqueBounded lang formula Set.empty

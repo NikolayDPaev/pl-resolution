@@ -3,7 +3,7 @@ module Heuristic exposing (minPseudoResolutionSteps)
 import Disjunct exposing (Disjunct)
 import DisjunctSet exposing (DisjunctSet)
 import Language exposing (Literal(..))
-import PairsHelperFunctions exposing (..)
+import ListHelperFunctions exposing (..)
 
 -- heuristics counts the number of steps required to reach empty disjunct
 -- if we are using pseudo resolution and pseudo colapses

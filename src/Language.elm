@@ -10,6 +10,20 @@ type alias Language = {
     funcs : Set String
     }
 
+printLanguage : Language -> String
+printLanguage l =
+    let
+        printSet : Set String -> String
+        printSet set = "{" ++ String.dropRight 2 (Set.foldl (\ x acc -> acc ++ x ++ ", ") "" set) ++ "}"
+    in
+    "{vars: " ++ printSet l.vars ++
+    ", consts: " ++ printSet l.consts ++ 
+    ", preds: " ++ printSet l.preds ++
+    ", funcs: " ++ printSet l.funcs ++ "}"
+
+empty : Language
+empty = {vars = Set.empty, consts = Set.empty, preds = Set.empty, funcs = Set.empty}
+
 type Term
     = Constant String
     | Variable String
