@@ -1,0 +1,30 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resolution method solver</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="main.js"></script>
+</head>
+
+<body>
+  <h1>Resolution method solver</h1>
+  <p>Algorithm that proves unsatisfiability of set of formulas in predicate logic.</p>
+  <h3>How to use:</h3>
+  <p>Input the language symbols. Input formulas that you would like to prove are unsatisfiable. Click make transformations to transform the formulas to disjunct sets. Then click apply resolution.</p>
+  <p>Note that the method is semi-computable - if your formulas are satisfiable then the algorithm will never end.</p>
+  <div id="overview"></div>
+  <div id="app"></div>
+  <script>
+  var app = Elm.Main.init({
+    node: document.getElementById('app')
+  });
+  </script>
+
+  <footer>
+    <p>Author: Nikolay Paev</p>
+    <p><a href="https://github.com/NikolayDPaev/pl-resolution">Github repository</a></p>
+  </footer>
+</body>
+</html>

@@ -23,6 +23,9 @@ toString d =
 empty : DisjunctSet
 empty = Set.Any.empty Disjunct.toString
 
+isEmpty : DisjunctSet -> Bool
+isEmpty = Set.Any.isEmpty
+
 equal : DisjunctSet -> DisjunctSet -> Bool
 equal = Set.Any.equal
 

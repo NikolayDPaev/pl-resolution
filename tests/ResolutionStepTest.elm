@@ -8,8 +8,13 @@ import ResolutionStep exposing (resolvents, LogEntry(..))
 import Disjunct
 import Language exposing (Literal(..))
 import Language exposing (Term(..))
-import ResolutionStep exposing (logEntryToString)
+import ResolutionStep exposing (printLogEntry)
 import ResolutionStep exposing (colapses)
+
+logEntryToString : LogEntry -> String
+logEntryToString le = 
+    let (sub, step) = printLogEntry le
+    in sub ++ " " ++ step
 
 resolutionTest : Test
 resolutionTest = describe "resolution test" [

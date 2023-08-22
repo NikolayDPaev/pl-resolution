@@ -8,10 +8,10 @@ type LogEntry
     = Res Disjunct Disjunct Substitution Disjunct
     | Col Disjunct Substitution Disjunct
 
-logEntryToString : LogEntry -> String
-logEntryToString le = case le of
-    Res d1 d2 sub resD -> subToString sub ++ " Res(" ++ Disjunct.toString d1 ++ ", " ++ Disjunct.toString d2 ++ ") = " ++ Disjunct.toString resD
-    Col d sub resD -> subToString sub ++ " Col(" ++ Disjunct.toString d ++ ") = " ++ Disjunct.toString resD
+printLogEntry : LogEntry -> (String, String)
+printLogEntry le = case le of
+    Res d1 d2 sub resD -> (subToString sub, "Res(" ++ Disjunct.toString d1 ++ ", " ++ Disjunct.toString d2 ++ ") = " ++ Disjunct.toString resD)
+    Col d sub resD -> (subToString sub, "Col(" ++ Disjunct.toString d ++ ") = " ++ Disjunct.toString resD)
 
 resolvents : Disjunct -> Disjunct -> List (Disjunct, LogEntry)
 resolvents d1 d2 =

@@ -16,10 +16,10 @@ printLanguage l =
         printSet : Set String -> String
         printSet set = "{" ++ String.dropRight 2 (Set.foldl (\ x acc -> acc ++ x ++ ", ") "" set) ++ "}"
     in
-    "{vars: " ++ printSet l.vars ++
-    ", consts: " ++ printSet l.consts ++ 
-    ", preds: " ++ printSet l.preds ++
-    ", funcs: " ++ printSet l.funcs ++ "}"
+    "{Vars: " ++ printSet l.vars ++
+    ", Preds: " ++ printSet l.preds ++
+    ", Consts: " ++ printSet l.consts ++ 
+    ", Funcs: " ++ printSet l.funcs ++ "}"
 
 empty : Language
 empty = {vars = Set.empty, consts = Set.empty, preds = Set.empty, funcs = Set.empty}
