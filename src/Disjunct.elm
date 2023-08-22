@@ -13,6 +13,8 @@ union = Set.Any.union
 
 toString : Disjunct -> String
 toString d =
+    if isEmpty d then "■"
+    else
     let
        listOfDisjunsts = Set.Any.toList d 
     in "{" ++ String.dropRight 2 (List.foldl (\ x acc -> acc ++ (literalToString x) ++ ", ") "" listOfDisjunsts) ++ "}"

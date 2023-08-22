@@ -6,12 +6,11 @@ import Transformations exposing (..)
 import DisjunctSet exposing (DisjunctSet)
 import Search exposing (..)
 import ResolutionStep exposing (logEntryToString)
-import ListHelperFunctions exposing (listOfMaybesToMaybeList)
 
 import Browser
 import Html exposing (Html, div, input, button, text, span)
 import Html.Attributes exposing (placeholder, class, value)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onClick, onInput, onFocus)
 import Set exposing (Set)
 
 type alias Model =
@@ -19,8 +18,10 @@ type alias Model =
     , constants : String
     , predicates : String
     , functions : String
+    , inputLanguage : Language
     , language : Language
     , formulaStrings : List (String, String)
+    , focusOnFormulaNumber : Maybe Int
     , formulas : List (Maybe Formula)
     , transformedFormulasText : List (List String)
     , disjunctSet : DisjunctSet
@@ -34,8 +35,10 @@ init =
     , constants = ""
     , predicates = ""
     , functions = ""
+    , inputLanguage = Language.empty
     , language = Language.empty
     , formulaStrings = []
+    , focusOnFormulaNumber = Nothing
     , formulas = []
     , transformedFormulasText = []
     , disjunctSet = DisjunctSet.empty
@@ -49,6 +52,9 @@ type Msg
     | UpdateFunctions String
     | UpdatePredicates String
     | AddFormula
+    | NegationOfLast
+    | AddSymbol Char
+    | FocusChanged (Maybe Int)
     | UpdateFormula Int String
     | StartTransformations
     | StartResolution
@@ -56,13 +62,13 @@ type Msg
 update : Msg -> Model -> Model
 update msg model =
     let
-        modelLanguage = model.language
+        modelLanguage = model.inputLanguage
         parseLanguageSet : String -> Set String
         parseLanguageSet str =
             str 
-                |> String.split ","
-                |> List.map String.trim
-                |> Set.fromList
+            |> String.split ","
+            |> List.map String.trim
+            |> Set.fromList
 
         updateAtIndex : Int -> a -> List a -> List a
         updateAtIndex index value =
@@ -80,25 +86,64 @@ update msg model =
     in
     case msg of
         UpdateConstants value ->
-            { model | constants = value, language = {modelLanguage | consts = parseLanguageSet value}} |> updateAllFormulas
+            { model | constants = value, inputLanguage = {modelLanguage | consts = parseLanguageSet value}} |> updateAllFormulas
 
         UpdateVariables value ->
-            { model | variables = value, language = {modelLanguage | vars = parseLanguageSet value}} |> updateAllFormulas
+            { model | variables = value, inputLanguage = {modelLanguage | vars = parseLanguageSet value}} |> updateAllFormulas
 
         UpdateFunctions value ->
-            { model | functions = value, language = {modelLanguage | funcs = parseLanguageSet value}} |> updateAllFormulas
+            { model | functions = value, inputLanguage = {modelLanguage | funcs = parseLanguageSet value}} |> updateAllFormulas
 
         UpdatePredicates value ->
-            { model | predicates = value, language = {modelLanguage | preds = parseLanguageSet value}} |> updateAllFormulas
+            { model | predicates = value, inputLanguage = {modelLanguage | preds = parseLanguageSet value}} |> updateAllFormulas
 
         AddFormula -> { 
-                model |
-                    formulas = model.formulas ++ [Nothing],
-                    formulaStrings = model.formulaStrings ++ [("", "")]
-                }
+            model |
+                formulas = model.formulas ++ [Nothing],
+                formulaStrings = model.formulaStrings ++ [("", "")]
+            }
+
+        NegationOfLast ->
+            let
+                prependToLastNonEmpty : List (String, String) -> List (String, String)
+                prependToLastNonEmpty strings =
+                    let
+                        prependToFirstNonEmpty str =
+                            case str of
+                                [] -> []
+                                (head, err) :: tail ->
+                                    if String.isEmpty head then
+                                        (head, err) :: prependToFirstNonEmpty tail
+                                    else
+                                        ("¬" ++ head, err) :: tail
+                    in
+                    List.reverse (prependToFirstNonEmpty (List.reverse strings))
+            in
+            { model | formulaStrings = prependToLastNonEmpty model.formulaStrings }
+                    |> updateAllFormulas
+
+        AddSymbol symbol ->
+            case model.focusOnFormulaNumber of
+                Just index -> 
+                    { model | formulaStrings = List.indexedMap 
+                            (\ i el -> 
+                                if i == index then 
+                                    Tuple.mapFirst (\ x -> x ++ String.fromChar symbol) el
+                                else el)
+                            model.formulaStrings
+                    }
+                Nothing -> model
+
+        FocusChanged maybeInt -> 
+            { model | focusOnFormulaNumber = maybeInt}
 
         UpdateFormula index formulaString ->
-            case Parser.parse model.language formulaString of
+            if String.isEmpty formulaString then { 
+                    model | formulas = updateAtIndex index Nothing model.formulas, 
+                            formulaStrings = updateAtIndex index (formulaString, "") model.formulaStrings
+                    }
+            else 
+            case Parser.parse model.inputLanguage formulaString of
                 Ok formula -> { 
                     model | formulas = updateAtIndex index (Just formula) model.formulas, 
                             formulaStrings = updateAtIndex index (formulaString, "") model.formulaStrings
@@ -146,21 +191,26 @@ update msg model =
                         ++ line7 :: if lString /= l2String then [" Language is updated to " ++ l2String] else []
                     )
                 
-                clearedModel = { model | transformedFormulasText = [["Transformations: "]], transformationResult = "", language = Language.empty }
-                (newModel, finalDisjunctSet) =
-                    case listOfMaybesToMaybeList model.formulas of
-                        Just formulas ->
-                            List.foldr (\ f (oldModel, dss) ->
-                                let
-                                    (ds, newL, lines) = transform f oldModel.language
-                                in
-                                ({oldModel | transformedFormulasText = lines :: oldModel.transformedFormulasText,
-                                             language = newL
-                                }, DisjunctSet.union dss ds)) (clearedModel, DisjunctSet.empty) formulas
-                        Nothing -> (clearedModel, DisjunctSet.empty)
-            in
-            {newModel | transformationResult = "Final Disjunct set: " ++ DisjunctSet.toString finalDisjunctSet
-                      , disjunctSet = finalDisjunctSet}
+                clearedModel = { model | transformedFormulasText = [], 
+                                         transformationResult = "", 
+                                         language = model.inputLanguage,
+                                         disjunctSet = DisjunctSet.empty }
+                filteredFormulas = List.filterMap identity model.formulas
+                (newM, finalDisjunctSet) = List.foldr (\ f (oldModel, dss) ->
+                    let
+                        (ds, newL, lines) = transform f oldModel.language
+                    in
+                    (
+                        { oldModel | transformedFormulasText = lines :: oldModel.transformedFormulasText, language = newL}
+                        , DisjunctSet.union dss ds
+                    )
+                    ) (clearedModel, DisjunctSet.empty) filteredFormulas
+
+            in {newM | transformationResult =
+                        if List.isEmpty newM.transformedFormulasText 
+                            then ""
+                        else "Final Disjunct set: " ++ DisjunctSet.toString finalDisjunctSet
+                     , disjunctSet = finalDisjunctSet}
 
         StartResolution ->
             -- must be async
@@ -173,33 +223,49 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ div [ class "section" ]
-            [ div [ class "label" ] [ text "Language" ]
+        [ div [ class "input" ]
+            [ div [ class "label" ] [ text "Language: " ]
             , input [ placeholder "Variables", value model.variables, onInput UpdateVariables ] []
             , input [ placeholder "Constants", value model.constants, onInput UpdateConstants ] []
             , input [ placeholder "Predicates", value model.predicates, onInput UpdatePredicates ] []
             , input [ placeholder "Functions", value model.functions, onInput UpdateFunctions ] []
             ]
-        , div [ class "section" ]
+        , div [ class "input" ]
             [ div [ class "label" ] [ text "Formulas:" ]
             , div [] 
                 (List.concat (List.indexedMap
                     (\ index (formula, error) -> [
                         div [] [
-                            input [ placeholder ("Formula " ++ (String.fromInt (index + 1))), value formula, onInput (UpdateFormula index) ] [],
+                            input [ placeholder ("Formula")
+                                  , value formula
+                                  , onInput (UpdateFormula index)
+                                  , onFocus (FocusChanged (Just index)) ] [],
                             span [class "error"] [text error]
                         ]
                     ])
                     model.formulaStrings
                 ))
-            , button [ onClick AddFormula ] [ text "Add Formula" ]
+            , div [] [
+                  button [ onClick AddFormula ] [ text "Add Formula" ]
+                , button [ onClick NegationOfLast ] [ text "Negation of last formula" ]
+                ]
+            , div [ class "label" ] [ text "Insert:" ]
+            , div [] [
+                  button [onClick (AddSymbol '∀') ] [ text "∀"]
+                , button [onClick (AddSymbol '∃') ] [ text "∃"]
+                , button [onClick (AddSymbol '&') ] [ text "&"]
+                , button [onClick (AddSymbol '∨') ] [ text "∨"]
+                , button [onClick (AddSymbol '⇔') ] [ text "⇔"]
+                , button [onClick (AddSymbol '⇒') ] [ text "⇒"]
+                , button [onClick (AddSymbol '¬') ] [ text "¬"]
+                ]
             ]
         , button [ onClick StartTransformations ] [ text "Make Transformations" ]
         , div [ class "result" ] 
             [ div []
                 (List.concat (List.indexedMap
                     (\ index formulaLines -> [
-                        div [class "label"] [text ("Formula #" ++ (String.fromInt index))], 
+                        div [class "label"] [text ("Formula " ++ (String.fromInt (index + 1)))], 
                         div [] (List.map (\ step -> div [class "result"] [text step]) formulaLines)
                     ])
                     model.transformedFormulasText
@@ -214,5 +280,3 @@ view model =
 main : Program () Model Msg
 main =
     Browser.sandbox { init = init, update = update, view = view }
-
-    
