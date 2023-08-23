@@ -5,6 +5,7 @@ import DisjunctSet exposing (DisjunctSet)
 import ResolutionStep exposing (LogEntry, resolvents, colapses)
 import PriorityQueue exposing (PriorityQueue)
 import ListHelperFunctions exposing (..)
+-- import Heuristic exposing (minPseudoResolutionSteps)
 
 type alias Node =
     { disjuncts : DisjunctSet
@@ -21,7 +22,7 @@ hScore node =
         in 
         if d1Size < min then d1Size else min
     ) (2^53 - 1) node.disjuncts
-    --minPseudoResolutionSteps node.disjuncts
+    -- minPseudoResolutionSteps node.disjuncts
 
 generateChildren : Node -> List Node
 generateChildren node = 

@@ -259,6 +259,38 @@ toPNFTest =
                             (Negation (Predicate "q" [Variable "y",Variable "t"])))))
                 )
             )
+        ),
+        test "pull quantors 2" (\_ ->
+            let 
+                lang1 = { consts = Set.fromList [], funcs = Set.fromList ["f"], preds = Set.fromList ["p","q"], vars = Set.fromList ["x","y","z"] }
+            in
+            Expect.equal
+            ((Quantification ForAll "x"
+                (Quantification ForAll "y" 
+                    (Quantification ForAll "z" 
+                        (Quantification ForAll "u" 
+                            (Operation 
+                                (Negation (Predicate "p" [Variable "x",Function "f" [Variable "y"]]))
+                                Or
+                                (Operation 
+                                    (Predicate "p" [Function "f" [Variable "y"],Variable "x"])
+                                    Or
+                                    (Negation (Predicate "p" [Variable "u",Variable "z"])))))))),
+            {lang1 | vars = Set.insert "u" (Set.insert "z" lang1.vars)})
+            (toPNF lang1
+            (Quantification ForAll "x" 
+                (Quantification ForAll "y" 
+                    (Operation 
+                        (Negation (Predicate "p" [Variable "x",Function "f" [Variable "y"]]))
+                        Or
+                        (Operation 
+                            (Predicate "p" [Function "f" [Variable "y"],Variable "x"])
+                            Or 
+                            (Quantification ForAll "y" 
+                                (Quantification ForAll "x" 
+                                    (Negation (Predicate "p" [Variable "x",Variable "y"])))))))
+            )
+            )
         )
     ]
 

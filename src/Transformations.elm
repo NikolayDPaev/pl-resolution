@@ -141,20 +141,34 @@ toPNF lang formula =
                         in ((Quantification q x finalF1), finalVars, finalL)
         
         pullQuantors : Formula -> Formula
-        pullQuantors f =
-            case f of
-                Negation (Quantification ForAll x f1) -> Quantification Exists x (Negation (pullQuantors f1))
-                Negation (Quantification Exists x f1) -> Quantification ForAll x (Negation (pullQuantors f1))
-                Negation f1 -> Negation (pullQuantors f1)
-                Operation (Quantification q1 x1 f1) op (Quantification q2 x2 f2) ->
-                    Quantification q1 x1 (Quantification q2 x2 (pullQuantors (Operation (pullQuantors f1) op (pullQuantors f2))))
-                Operation (Quantification q1 x1 f1) op f2 ->
-                    Quantification q1 x1 (pullQuantors (Operation (pullQuantors f1) op (pullQuantors f2)))
-                Operation f1 op (Quantification q2 x2 f2) ->
-                    Quantification q2 x2 (pullQuantors (Operation (pullQuantors f1) op (pullQuantors f2)))
-                Operation f1 op f2 -> Operation (pullQuantors f1) op (pullQuantors f2)
-                Quantification q x f1 -> Quantification q x (pullQuantors f1)
-                _ -> f
+        pullQuantors initF =
+            let
+                pullOnce : Formula -> Formula
+                pullOnce f =
+                    case f of
+                        Negation (Quantification ForAll x f1) -> Quantification Exists x (Negation (pullQuantors f1))
+                        Negation (Quantification Exists x f1) -> Quantification ForAll x (Negation (pullQuantors f1))
+                        Negation f1 -> Negation (pullQuantors f1)
+                        Operation (Quantification q1 x1 f1) op (Quantification q2 x2 f2) ->
+                            Quantification q1 x1 (Quantification q2 x2 (pullQuantors (Operation (pullQuantors f1) op (pullQuantors f2))))
+                        Operation (Quantification q1 x1 f1) op f2 ->
+                            Quantification q1 x1 (pullQuantors (Operation (pullQuantors f1) op (pullQuantors f2)))
+                        Operation f1 op (Quantification q2 x2 f2) ->
+                            Quantification q2 x2 (pullQuantors (Operation (pullQuantors f1) op (pullQuantors f2)))
+                        Operation f1 op f2 -> Operation (pullQuantors f1) op (pullQuantors f2)
+                        Quantification q x f1 -> Quantification q x (pullQuantors f1)
+                        _ -> f
+                loop : Formula -> Formula
+                loop f1 =
+                    let 
+                        newF = pullOnce f1
+                    in
+                    if printFormula newF /= printFormula f1 then
+                        loop newF
+                    else
+                        newF
+            in
+            loop initF
     
         (uniqueBoundedF, _, modifiedL) = makeUniqueBounded lang formula Set.empty
     in 

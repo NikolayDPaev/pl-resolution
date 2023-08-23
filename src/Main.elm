@@ -8,20 +8,16 @@ import Search exposing (..)
 import ResolutionStep exposing (printLogEntry)
 
 import Browser
-import Html exposing (Html, div, input, button, text)
+import Html exposing (Html, div, input, button, text, span, ol, li)
 import Html.Attributes exposing (placeholder, class, value)
 import Html.Events exposing (onClick, onInput, onFocus)
 import Set exposing (Set)
-import Html exposing (span)
-import ResolutionStep exposing (printLogEntry)
-import Html exposing (ol)
-import Html exposing (li)
 
 type alias Model =
     { variables : String
     , predicates : String
-    , constants : String
     , functions : String
+    , constants : String
     , inputLanguage : Language
     , language : Language
     , formulaStrings : List (String, String)
@@ -37,13 +33,13 @@ init : Model
 init =
     { variables = ""
     , predicates = ""
-    , constants = ""
     , functions = ""
+    , constants = ""
     , inputLanguage = Language.empty
     , language = Language.empty
     , formulaStrings = [("", "")]
     , focusOnFormulaNumber = Nothing
-    , formulas = []
+    , formulas = [Nothing]
     , transformedFormulasText = []
     , disjunctSet = DisjunctSet.empty
     , transformationResult = ("", "")
@@ -95,11 +91,11 @@ update msg model =
         UpdatePredicates value ->
             { model | predicates = value, inputLanguage = {modelLanguage | preds = parseLanguageSet value}} |> updateAllFormulas
 
-        UpdateConstants value ->
-            { model | constants = value, inputLanguage = {modelLanguage | consts = parseLanguageSet value}} |> updateAllFormulas
-
         UpdateFunctions value ->
             { model | functions = value, inputLanguage = {modelLanguage | funcs = parseLanguageSet value}} |> updateAllFormulas
+
+        UpdateConstants value ->
+            { model | constants = value, inputLanguage = {modelLanguage | consts = parseLanguageSet value}} |> updateAllFormulas
 
         AddFormula -> { 
             model |
@@ -161,7 +157,7 @@ update msg model =
                 transform : Formula -> Language -> (DisjunctSet, Language, List (String, String))
                 transform f l =
                     let
-                        line1 = ("Original formula: ", printFormula f)
+                        line1 = ("Original formula: ",printFormula f)
                         f1 = eliminateImplAndEqv f
                         line2 = ("Elimination of implications and equivalences: ", printFormula f1)
                         f2 = moveNegations f1
@@ -200,12 +196,13 @@ update msg model =
                                          language = model.inputLanguage,
                                          disjunctSet = DisjunctSet.empty }
                 filteredFormulas = List.filterMap identity model.formulas
-                (newM, finalDisjunctSet) = List.foldr (\ f (oldModel, dss) ->
+                
+                (newM, finalDisjunctSet) = List.foldl (\ f (oldModel, dss) ->
                     let
                         (ds, newL, lines) = transform f oldModel.language
                     in
                     (
-                        { oldModel | transformedFormulasText = lines :: oldModel.transformedFormulasText, language = newL}
+                        { oldModel | transformedFormulasText = oldModel.transformedFormulasText ++ [lines], language = newL}
                         , DisjunctSet.union dss ds
                     )
                     ) (clearedModel, DisjunctSet.empty) filteredFormulas
@@ -234,8 +231,8 @@ view model =
             [ div [ class "label" ] [ text "Language: " ]
             , input [ class "language-input" ,placeholder "Variables", value model.variables, onInput UpdateVariables ] []
             , input [ class "language-input" ,placeholder "Predicates", value model.predicates, onInput UpdatePredicates ] []
-            , input [ class "language-input" ,placeholder "Constants", value model.constants, onInput UpdateConstants ] []
             , input [ class "language-input" ,placeholder "Functions", value model.functions, onInput UpdateFunctions ] []
+            , input [ class "language-input" ,placeholder "Constants", value model.constants, onInput UpdateConstants ] []
             ]
         , div [ class "formulas-insert-container" ] [
                 div [ class "formula-column" ]
