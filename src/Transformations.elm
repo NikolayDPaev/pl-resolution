@@ -163,7 +163,7 @@ toPNF lang formula =
                     let 
                         newF = pullOnce f1
                     in
-                    if printFormula newF /= printFormula f1 then
+                    if newF /= f1 then
                         loop newF
                     else
                         newF

@@ -24,10 +24,10 @@ resolutionTest = describe "resolution test" [
                 d2 = Disjunct.fromList [NegativePredicate "p" [Constant "c"]]
                 result = Disjunct.empty
             in
-            Expect.equalLists
-            [(Disjunct.toString result ++ " " ++ logEntryToString (Res d1 d2 (Dict.singleton "x" (Constant "c")) result))]
-            (resolvents d1 d2
-                |> List.map (\ (d, log) -> Disjunct.toString d ++ " " ++ logEntryToString log))
+            Expect.equalLists [(result, Res d1 d2 (Dict.singleton "x" (Constant "c")) result)]
+
+            
+            (resolvents d1 d2)
         ),
         test "test substitution of rest" (\_ ->
             let
@@ -36,10 +36,8 @@ resolutionTest = describe "resolution test" [
                 result = (Disjunct.fromList [PositivePredicate "q" [Function "f" [Constant "c"]], NegativePredicate "r" [Constant "c"]])
             in
             Expect.equalLists
-            [(Disjunct.toString result
-                ++ " " ++ logEntryToString (Res d1 d2 (Dict.singleton "x" (Constant "c")) result))]
-            (resolvents d1 d2
-                |> List.map (\ (d, log) -> Disjunct.toString d ++ " " ++ logEntryToString log))
+            [(result, (Res d1 d2 (Dict.singleton "x" (Constant "c")) result))]
+            (resolvents d1 d2)
         ),
         test "multiple possible resolvents"  (\_ ->
             let
@@ -49,12 +47,10 @@ resolutionTest = describe "resolution test" [
                 result2 = (Disjunct.fromList [PositivePredicate "p" [Function "f" [Variable "y"]], NegativePredicate "p" [Constant "c"]])
             in
             Expect.equalLists
-            [(Disjunct.toString result1
-                ++ " " ++ logEntryToString (Res d1 d2 (Dict.singleton "x" (Constant "c")) result1)),
-            (Disjunct.toString result2
-                ++ " " ++ logEntryToString (Res d1 d2 (Dict.singleton "x" (Function "f" [Variable "y"])) result2))]
-            (resolvents d1 d2
-                |> List.map (\ (d, log) -> Disjunct.toString d ++ " " ++ logEntryToString log))
+            [(result1, (Res d1 d2 (Dict.singleton "x" (Constant "c")) result1)),
+             (result2, (Res d1 d2 (Dict.singleton "x" (Function "f" [Variable "y"])) result2))
+            ]
+            (resolvents d1 d2)
         ),
         test "no resolvents"  (\_ ->
             let
@@ -63,8 +59,7 @@ resolutionTest = describe "resolution test" [
             in
             Expect.equalLists
             []
-            (resolvents d1 d2
-                |> List.map (\ (d, log) -> Disjunct.toString d ++ " " ++ logEntryToString log))
+            (resolvents d1 d2)
         )
     ]
 
@@ -76,9 +71,8 @@ colapseTest = describe "colapse test" [
                 result = Disjunct.empty
             in
             Expect.equalLists
-            [(Disjunct.toString result ++ " " ++ logEntryToString (Col d (Dict.singleton "x" (Constant "c")) result))]
-            (colapses d
-                |> List.map (\ (d_, log) -> Disjunct.toString d_ ++ " " ++ logEntryToString log))
+            [(result, (Col d (Dict.singleton "x" (Constant "c")) result))]
+            (colapses d)
         ),
         test "test substitution of rest" (\_ ->
             let
@@ -86,10 +80,8 @@ colapseTest = describe "colapse test" [
                 result = (Disjunct.fromList [PositivePredicate "q" [Function "f" [Constant "c"]]])
             in
             Expect.equalLists
-            [(Disjunct.toString result
-                ++ " " ++ logEntryToString (Col d (Dict.singleton "x" (Constant "c")) result))]
-            (colapses d
-                |> List.map (\ (d_, log) -> Disjunct.toString d_ ++ " " ++ logEntryToString log))
+            [(result, (Col d (Dict.singleton "x" (Constant "c")) result))]
+            (colapses d)
         ),
         test "multiple possible colapses"  (\_ ->
             let
@@ -101,12 +93,9 @@ colapseTest = describe "colapse test" [
                 result2 = (Disjunct.fromList [PositivePredicate "p" [Function "f" [Variable "y"]], NegativePredicate "p" [Constant "c"]])
             in
             Expect.equalLists
-            [(Disjunct.toString result1
-                ++ " " ++ logEntryToString (Col d (Dict.singleton "x" (Constant "c")) result1)),
-            (Disjunct.toString result2
-                ++ " " ++ logEntryToString (Col d (Dict.singleton "x" (Function "f" [Variable "y"])) result2))]
-            (colapses d
-                |> List.map (\ (d_, log) -> Disjunct.toString d_ ++ " " ++ logEntryToString log))
+            [(result1, (Col d (Dict.singleton "x" (Constant "c")) result1)),
+             (result2, (Col d (Dict.singleton "x" (Function "f" [Variable "y"])) result2))]
+            (colapses d)
         ),
         test "no colapses"  (\_ ->
             let
@@ -114,8 +103,7 @@ colapseTest = describe "colapse test" [
             in
             Expect.equalLists
             []
-            (colapses d
-                |> List.map (\ (d_, log) -> Disjunct.toString d_ ++ " " ++ logEntryToString log))
+            (colapses d)
         )
     ]
 
