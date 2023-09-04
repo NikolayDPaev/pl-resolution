@@ -1,4 +1,4 @@
-module Heuristic exposing (minPseudoResolutionSteps)
+module Heuristic exposing (..)
 
 import Disjunct exposing (Disjunct)
 import DisjunctSet exposing (DisjunctSet)
@@ -52,34 +52,36 @@ pseudoColapses d =
             else acc
         ) []
 
-generateChildren : DisjunctSet -> List DisjunctSet
-generateChildren ds = 
+generateChildren : (DisjunctSet, Int) -> List (DisjunctSet, Int)
+generateChildren (ds, steps) =
     let
         disjuncts = DisjunctSet.toList ds
     in
     subsetsOf2 disjuncts
         |> List.concatMap (\ (d1, d2) -> pseudoResolvents d1 d2)
         |> List.append (disjuncts |> List.concatMap (\ d -> pseudoColapses d))
-        |> List.map (\ d -> DisjunctSet.insert d ds)
+        |> List.map (\ d -> (DisjunctSet.insert d ds, steps + 1))
 
 final : DisjunctSet -> Bool
 final ds = 
     DisjunctSet.any Disjunct.isEmpty ds
 
-bfsLoop : List DisjunctSet -> Int -> Int
-bfsLoop queue steps =
+bfsLoop : List (DisjunctSet, Int) -> Int -> Int
+bfsLoop queue maxSteps =
     case queue of
-        current :: restQueue ->
+        (current, step) :: restQueue ->
             if final current then
-                steps
+                step
+            else if step >= maxSteps then
+                step
             else
                 let
-                    children = generateChildren current
+                    children = generateChildren (current, step)
                     newQueue = List.append restQueue children
                 in
-                    bfsLoop newQueue steps + 1
-        _ -> 2 ^ 53 - 1
+                    bfsLoop newQueue maxSteps
+        _ -> maxSteps
 
 minPseudoResolutionSteps : DisjunctSet -> Int
 minPseudoResolutionSteps ds =
-    bfsLoop [ds] 0
+    bfsLoop [(ds, 0)] 10
