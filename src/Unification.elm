@@ -1,6 +1,5 @@
-module Unification exposing (unification, Substitution, replaceInLiteral, subToString)
+module Unification exposing (unification, replaceInLiteral, subToString)
 
-import Dict exposing (Dict)
 import Set
 
 import Language exposing (Term(..))
@@ -8,14 +7,11 @@ import Language exposing (Literal(..))
 import Language exposing (varsInTerm)
 import Transformations exposing (replaceInTerm)
 import Language exposing (printTerm)
-
-type alias Substitution =  Dict String Term
+import Substitution exposing (Substitution)
 
 subToString : Substitution -> String
 subToString sub =
-    let
-       listOfSubs = Dict.toList sub
-    in "{" ++ String.dropRight 2 (List.foldl (\ (x, t) acc -> acc ++ x ++ "/" ++ printTerm t ++ ", ") "" listOfSubs) ++ "}"
+    "{" ++ String.dropRight 2 (List.foldl (\ (x, t) acc -> acc ++ x ++ "/" ++ printTerm t ++ ", ") "" sub) ++ "}"
 
 type Difference
     = Equal
@@ -73,9 +69,9 @@ unification p q =
                             substituteAndCallRecursive : String -> Term -> Maybe Substitution
                             substituteAndCallRecursive x t =
                                 unificationHelper
-                                    (replaceInListTerms (Dict.fromList [(x, t)]) l1)
-                                    (replaceInListTerms (Dict.fromList [(x, t)]) l2)
-                                    (Just (Dict.insert x t sub))
+                                    (replaceInListTerms (Substitution.singleton x t) l1)
+                                    (replaceInListTerms (Substitution.singleton x t) l2)
+                                    (Just (Substitution.insert x t sub))
                         in
                         case (t1, t2) of
                             (Variable x, Variable _) ->
@@ -94,8 +90,8 @@ unification p q =
     case (p, q) of
         (PositivePredicate pName list1, NegativePredicate qName list2) ->
             if pName /= qName then Nothing
-            else unificationHelper list1 list2 (Just Dict.empty)
+            else unificationHelper list1 list2 (Just Substitution.empty)
         (NegativePredicate pName list1, PositivePredicate qName list2) ->
             if pName /= qName then Nothing
-            else unificationHelper list1 list2 (Just Dict.empty)
+            else unificationHelper list1 list2 (Just Substitution.empty)
         (_, _) -> Nothing

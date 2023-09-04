@@ -1,12 +1,12 @@
 module Transformations exposing (..)
 
-import Dict exposing (Dict)
 import Set exposing (Set)
 
 import Generator exposing (..)
 import Language exposing (..)
 import Disjunct exposing (Disjunct)
 import DisjunctSet exposing (DisjunctSet)
+import Substitution exposing (Substitution)
 
 
 negate : Formula -> Formula
@@ -56,20 +56,25 @@ moveNegations outerFormula =
         Operation a op b -> Operation (moveNegations a) op (moveNegations b)
         Quantification q x f -> Quantification q x (moveNegations f)
 
-replaceInTerm : Dict String Term -> Term -> Term
+replaceInTerm : Substitution -> Term -> Term
 replaceInTerm substitutions term =
-    case term of
-        Variable var -> 
-            case Dict.get var substitutions of
-                Just subTerm -> subTerm
-                _ -> term
-        Function f terms -> Function f (List.map (replaceInTerm substitutions) terms)
-        _ -> term
+    let
+        replaceSingle : (String, Term) -> Term -> Term
+        replaceSingle (varToRepl, subTerm) t =
+            case t of
+                Variable var ->
+                    if var == varToRepl then
+                        subTerm
+                    else t
+                Function f terms -> Function f (List.map (replaceSingle (varToRepl, subTerm)) terms)
+                _ -> t
+    in
+    List.foldl replaceSingle term substitutions
 
 skolemization : Language -> Formula -> (Formula, Language)
 skolemization lang formula =
     let
-        skolemHelper : Language -> Generator -> List String -> Dict String Term -> Formula -> (Formula, Language)
+        skolemHelper : Language -> Generator -> List String -> Substitution -> Formula -> (Formula, Language)
         skolemHelper l gen dependencies substitutions f =
             case f of
                 Predicate p terms -> (Predicate p (List.map (replaceInTerm substitutions) terms), l)
@@ -86,14 +91,14 @@ skolemization lang formula =
                 Quantification Exists x f1 -> 
                     let (newTerm, newGen) = if List.isEmpty dependencies then Tuple.mapFirst Constant (getConst gen)
                             else Tuple.mapFirst (\ funcName -> Function funcName (List.map Variable dependencies)) (getFunc gen)
-                        (newF, newL) = skolemHelper l newGen dependencies (Dict.insert x newTerm substitutions) f1
+                        (newF, newL) = skolemHelper l newGen dependencies (Substitution.insert x newTerm substitutions) f1
                     in 
                         case newTerm of 
                             Constant c -> (newF, {newL | consts = Set.insert c newL.consts})
                             Function func _ -> (newF, {newL | funcs = Set.insert func newL.funcs})
                             _ -> (newF, newL)
     in
-    skolemHelper lang (createGenerator lang.consts lang.funcs lang.vars) [] Dict.empty formula
+    skolemHelper lang (createGenerator lang.consts lang.funcs lang.vars) [] Substitution.empty formula
 
 
 toPNF : Language -> Formula -> (Formula, Language)
@@ -102,7 +107,7 @@ toPNF lang formula =
         substituteVar : String -> String -> Formula -> Formula
         substituteVar var subVar f =
             case f of
-                Predicate p terms -> Predicate p (List.map (replaceInTerm (Dict.singleton var (Variable subVar))) terms)
+                Predicate p terms -> Predicate p (List.map (replaceInTerm (Substitution.singleton var (Variable subVar))) terms)
                 Negation f1 -> negate (substituteVar var subVar f1)
                 Operation f1 op f2 -> (Operation (substituteVar var subVar f1) op (substituteVar var subVar f2))
                 Quantification q x f1 ->

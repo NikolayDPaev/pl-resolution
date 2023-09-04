@@ -1,8 +1,9 @@
 module ResolutionStep exposing (..)
 
 import Disjunct exposing (Disjunct)
-import Unification exposing (unification, Substitution, replaceInLiteral, subToString)
+import Unification exposing (unification, replaceInLiteral, subToString)
 import ListHelperFunctions exposing (..)
+import Substitution exposing (Substitution)
 
 type LogEntry
     = Res Disjunct Disjunct Substitution Disjunct

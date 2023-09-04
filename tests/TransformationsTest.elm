@@ -387,78 +387,77 @@ pNFToCNFTest = describe "pNFToCNFTests" [
 toDisjunctSetTest : Test
 toDisjunctSetTest = describe "toDisjunctSetTests" [
     test "simple" (\_ ->
-        (Expect.equal True
-            (DisjunctSet.equal (DisjunctSet.fromList
-                [
-                    Disjunct.fromList [
-                        PositivePredicate "p" [Variable "x", Variable "y"],
-                        PositivePredicate "q" [Variable "z", Variable "u"]
-                    ],
-                    Disjunct.fromList [
-                        PositivePredicate "p" [Variable "x", Variable "y"],
-                        NegativePredicate "p" [Variable "v", Variable "v"],
-                        PositivePredicate "p" [Variable "z", Variable "x"]
-                    ]
-                ])
-                (toDisjunctSet
-                    (Quantification ForAll "x"
+        (Expect.equal 
+        (DisjunctSet.fromList
+            [
+                Disjunct.fromList [
+                    PositivePredicate "p" [Variable "x", Variable "y"],
+                    PositivePredicate "q" [Variable "z", Variable "u"]
+                ],
+                Disjunct.fromList [
+                    PositivePredicate "p" [Variable "x", Variable "y"],
+                    NegativePredicate "p" [Variable "v", Variable "v"],
+                    PositivePredicate "p" [Variable "z", Variable "x"]
+                ]
+            ])
+            (toDisjunctSet
+                (Quantification ForAll "x"
+                    (Operation
+                        (Operation 
+                            (Predicate "p" [Variable "x", Variable "y"])
+                            Or
+                            (Predicate "q" [Variable "z", Variable "u"])
+                        )
+                    And
                         (Operation
+                            (Predicate "p" [Variable "x", Variable "y"])
+                            Or
                             (Operation 
-                                (Predicate "p" [Variable "x", Variable "y"])
+                                (Negation (Predicate "p" [Variable "v", Variable "v"]))
                                 Or
-                                (Predicate "q" [Variable "z", Variable "u"])
-                            )
-                        And
-                            (Operation
-                                (Predicate "p" [Variable "x", Variable "y"])
-                                Or
-                                (Operation 
-                                    (Negation (Predicate "p" [Variable "v", Variable "v"]))
-                                    Or
-                                    (Predicate "p" [Variable "z", Variable "x"])
-                                )
+                                (Predicate "p" [Variable "z", Variable "x"])
                             )
                         )
                     )
                 )
             )
         )
+        
     ),
 
     test "dublicates" (\_ ->
-        (Expect.equal True
-            (DisjunctSet.equal (DisjunctSet.fromList
-                [
-                    Disjunct.fromList [
-                        PositivePredicate "p" [Variable "x", Variable "y"],
-                        PositivePredicate "q" [Variable "z", Variable "u"]
-                    ],
-                    Disjunct.fromList [
-                        NegativePredicate "p" [Variable "v", Variable "v"],
-                        PositivePredicate "p" [Variable "z", Variable "x"]
-                    ]
-                ])
-                (toDisjunctSet
-                    (Quantification ForAll "x"
+        (Expect.equal
+        (DisjunctSet.fromList
+            [
+                Disjunct.fromList [
+                    PositivePredicate "p" [Variable "x", Variable "y"],
+                    PositivePredicate "q" [Variable "z", Variable "u"]
+                ],
+                Disjunct.fromList [
+                    NegativePredicate "p" [Variable "v", Variable "v"],
+                    PositivePredicate "p" [Variable "z", Variable "x"]
+                ]
+            ])
+            (toDisjunctSet
+                (Quantification ForAll "x"
+                    (Operation
+                        (Operation 
+                            (Predicate "p" [Variable "x", Variable "y"])
+                            Or
+                            (Predicate "q" [Variable "z", Variable "u"])
+                        )
+                    And
                         (Operation
                             (Operation 
-                                (Predicate "p" [Variable "x", Variable "y"])
+                                (Negation (Predicate "p" [Variable "v", Variable "v"]))
                                 Or
-                                (Predicate "q" [Variable "z", Variable "u"])
+                                (Predicate "p" [Variable "z", Variable "x"])
                             )
-                        And
-                            (Operation
-                                (Operation 
-                                    (Negation (Predicate "p" [Variable "v", Variable "v"]))
-                                    Or
-                                    (Predicate "p" [Variable "z", Variable "x"])
-                                )
+                            Or
+                            (Operation 
+                                (Negation (Predicate "p" [Variable "v", Variable "v"]))
                                 Or
-                                (Operation 
-                                    (Negation (Predicate "p" [Variable "v", Variable "v"]))
-                                    Or
-                                    (Predicate "p" [Variable "z", Variable "x"])
-                                )
+                                (Predicate "p" [Variable "z", Variable "x"])
                             )
                         )
                     )
@@ -466,4 +465,17 @@ toDisjunctSetTest = describe "toDisjunctSetTests" [
             )
         )
     )
+    ]
+
+replaceInTermTest : Test
+replaceInTermTest = describe "replaceInTerm test" [
+        test "replace multiple chained variables" (\_ ->
+            let
+                term = (Function "f" [Variable "x", Function "g" [Variable "y", Constant "a", Function "f" [Variable "x", Constant "a"]]])
+                result = (Function "f" [Function "h" [Variable "z"], Function "g" [Variable "z", Constant "a", Function "f" [Function "h" [Variable "z"], Constant "a"]]])
+            in
+            Expect.equal 
+                result
+                (replaceInTerm ([("x", Function "h" [Variable "y"]), ("y", Variable "z")]) term)
+        )
     ]
