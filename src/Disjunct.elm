@@ -42,3 +42,12 @@ map f d = Set.Any.map literalToString f d
 
 size : Disjunct -> Int
 size = Set.Any.size
+
+type alias IndexedDisjunct = (Int, Disjunct)
+
+indexedDisjunctToString : IndexedDisjunct -> String
+indexedDisjunctToString (i, d) =
+    "D" ++ String.fromInt i ++ " = " ++ (toString d)
+
+indexToString : IndexedDisjunct -> String
+indexToString (i, _) = "D" ++ String.fromInt i

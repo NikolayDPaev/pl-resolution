@@ -5,7 +5,6 @@ import Language exposing (..)
 import Transformations exposing (..)
 import DisjunctSet exposing (DisjunctSet)
 import Search exposing (..)
-import ResolutionStep exposing (printLogEntry)
 
 import Browser
 import Html exposing (Html, div, input, button, text, span, ol, li)
@@ -210,19 +209,15 @@ update msg model =
             in {newM | transformationResult =
                         if List.isEmpty newM.transformedFormulasText 
                             then ("", "")
-                        else ("Final Disjunct set:", DisjunctSet.toString finalDisjunctSet)
+                        else ("Final Disjunct set:", DisjunctSet.toIndexedString finalDisjunctSet)
                      , disjunctSet = finalDisjunctSet}
 
         StartResolution ->
             -- must be async
-            let
-                logs = Maybe.withDefault [] (resolutionMethod model.disjunctSet)
-                steps = List.map printLogEntry logs
-            in
             if DisjunctSet.isEmpty model.disjunctSet then
                 { model | resolutionSteps = []}
             else
-                { model | resolutionSteps = steps }
+                { model | resolutionSteps = Maybe.withDefault [] (resolutionMethod model.disjunctSet) }
 
 view : Model -> Html Msg
 view model =

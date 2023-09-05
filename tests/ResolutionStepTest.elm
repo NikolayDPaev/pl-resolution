@@ -14,19 +14,17 @@ resolutionTest : Test
 resolutionTest = describe "resolution test" [
         test "simple resolution" (\_ ->
             let
-                d1 = Disjunct.fromList [PositivePredicate "p" [Variable "x"]]
-                d2 = Disjunct.fromList [NegativePredicate "p" [Constant "c"]]
+                d1 = (1, Disjunct.fromList [PositivePredicate "p" [Variable "x"]])
+                d2 = (2, Disjunct.fromList [NegativePredicate "p" [Constant "c"]])
                 result = Disjunct.empty
             in
             Expect.equalLists [(result, Res d1 d2 (Substitution.singleton "x" (Constant "c")) result)]
-
-            
             (resolvents d1 d2)
         ),
         test "test substitution of rest" (\_ ->
             let
-                d1 = Disjunct.fromList [PositivePredicate "p" [Variable "x"], PositivePredicate "q" [Function "f" [Variable "x"]]]
-                d2 = Disjunct.fromList [NegativePredicate "p" [Constant "c"], NegativePredicate "r" [Variable "x"]]
+                d1 = (1, Disjunct.fromList [PositivePredicate "p" [Variable "x"], PositivePredicate "q" [Function "f" [Variable "x"]]])
+                d2 = (2, Disjunct.fromList [NegativePredicate "p" [Constant "c"], NegativePredicate "r" [Variable "x"]])
                 result = (Disjunct.fromList [PositivePredicate "q" [Function "f" [Constant "c"]], NegativePredicate "r" [Constant "c"]])
             in
             Expect.equalLists
@@ -35,8 +33,8 @@ resolutionTest = describe "resolution test" [
         ),
         test "multiple possible resolvents"  (\_ ->
             let
-                d1 = Disjunct.fromList [PositivePredicate "p" [Variable "x"], PositivePredicate "q" [Function "f" [Variable "y"]]]
-                d2 = Disjunct.fromList [NegativePredicate "p" [Constant "c"], NegativePredicate "q" [Variable "x"]]
+                d1 = (1, Disjunct.fromList [PositivePredicate "p" [Variable "x"], PositivePredicate "q" [Function "f" [Variable "y"]]])
+                d2 = (2, Disjunct.fromList [NegativePredicate "p" [Constant "c"], NegativePredicate "q" [Variable "x"]])
                 result1 = (Disjunct.fromList [PositivePredicate "q" [Function "f" [Variable "y"]], NegativePredicate "q" [Constant "c"]])
                 result2 = (Disjunct.fromList [PositivePredicate "p" [Function "f" [Variable "y"]], NegativePredicate "p" [Constant "c"]])
             in
@@ -48,8 +46,8 @@ resolutionTest = describe "resolution test" [
         ),
         test "no resolvents"  (\_ ->
             let
-                d1 = Disjunct.fromList [NegativePredicate "p" [Variable "x"], PositivePredicate "q" [Function "f" [Variable "x"]]]
-                d2 = Disjunct.fromList [NegativePredicate "p" [Constant "c"], NegativePredicate "q" [Variable "x"]]
+                d1 = (1, Disjunct.fromList [NegativePredicate "p" [Variable "x"], PositivePredicate "q" [Function "f" [Variable "x"]]])
+                d2 = (2, Disjunct.fromList [NegativePredicate "p" [Constant "c"], NegativePredicate "q" [Variable "x"]])
             in
             Expect.equalLists
             []
@@ -57,14 +55,14 @@ resolutionTest = describe "resolution test" [
         ),
         test "resolution of {p(v), r(a, v)} and {¬q(f(v), x), ¬r(v, x)}" (\_ ->
             let
-                d1 = Disjunct.fromList [
+                d1 = (1, Disjunct.fromList [
                             PositivePredicate "p" [Variable "v"],
                             PositivePredicate "r" [Constant "a", Variable "v"]
-                        ]
-                d2 = Disjunct.fromList [
+                        ])
+                d2 = (2, Disjunct.fromList [
                             NegativePredicate "q" [Function "f" [Variable "v"], Variable "x"],
                             NegativePredicate "r" [Variable "v", Variable "x"]
-                        ]
+                        ])
                 result = Disjunct.fromList [
                             PositivePredicate "p" [Constant "a"],
                             NegativePredicate "q" [Function "f" [Constant "a"], Constant "a"]
@@ -80,7 +78,7 @@ colapseTest : Test
 colapseTest = describe "colapse test" [
         test "simple colapse" (\_ ->
             let
-                d = Disjunct.fromList [PositivePredicate "p" [Variable "x"], NegativePredicate "p" [Constant "c"]]
+                d = (1, Disjunct.fromList [PositivePredicate "p" [Variable "x"], NegativePredicate "p" [Constant "c"]])
                 result = Disjunct.empty
             in
             Expect.equalLists
@@ -89,7 +87,7 @@ colapseTest = describe "colapse test" [
         ),
         test "test substitution of rest" (\_ ->
             let
-                d = Disjunct.fromList [PositivePredicate "p" [Variable "x"], PositivePredicate "q" [Function "f" [Variable "x"]], NegativePredicate "p" [Constant "c"]]
+                d = (1, Disjunct.fromList [PositivePredicate "p" [Variable "x"], PositivePredicate "q" [Function "f" [Variable "x"]], NegativePredicate "p" [Constant "c"]])
                 result = (Disjunct.fromList [PositivePredicate "q" [Function "f" [Constant "c"]]])
             in
             Expect.equalLists
@@ -98,10 +96,10 @@ colapseTest = describe "colapse test" [
         ),
         test "multiple possible colapses"  (\_ ->
             let
-                d = Disjunct.fromList [PositivePredicate "p" [Variable "x"],
+                d = (1, Disjunct.fromList [PositivePredicate "p" [Variable "x"],
                                        PositivePredicate "q" [Function "f" [Variable "y"]],
                                        NegativePredicate "p" [Constant "c"],
-                                       NegativePredicate "q" [Variable "x"]]
+                                       NegativePredicate "q" [Variable "x"]])
                 result1 = (Disjunct.fromList [PositivePredicate "q" [Function "f" [Variable "y"]], NegativePredicate "q" [Constant "c"]])
                 result2 = (Disjunct.fromList [PositivePredicate "p" [Function "f" [Variable "y"]], NegativePredicate "p" [Constant "c"]])
             in
@@ -112,7 +110,7 @@ colapseTest = describe "colapse test" [
         ),
         test "no colapses"  (\_ ->
             let
-                d = Disjunct.fromList [NegativePredicate "p" [Variable "x"], PositivePredicate "q" [Function "f" [Variable "x"]]]
+                d = (1, Disjunct.fromList [NegativePredicate "p" [Variable "x"], PositivePredicate "q" [Function "f" [Variable "x"]]])
             in
             Expect.equalLists
             []

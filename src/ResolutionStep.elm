@@ -1,21 +1,22 @@
 module ResolutionStep exposing (..)
 
-import Disjunct exposing (Disjunct)
+import Disjunct exposing (Disjunct, IndexedDisjunct)
 import Unification exposing (unification, replaceInLiteral, subToString)
 import ListHelperFunctions exposing (..)
 import Substitution exposing (Substitution)
 
 type LogEntry
-    = Res Disjunct Disjunct Substitution Disjunct
-    | Col Disjunct Substitution Disjunct
+    = Res IndexedDisjunct IndexedDisjunct Substitution Disjunct
+    | Col IndexedDisjunct Substitution Disjunct
 
-printLogEntry : LogEntry -> (String, String)
-printLogEntry le = case le of
-    Res d1 d2 sub resD -> (subToString sub, "Res(" ++ Disjunct.toString d1 ++ ", " ++ Disjunct.toString d2 ++ ") = " ++ Disjunct.toString resD)
-    Col d sub resD -> (subToString sub, "Col(" ++ Disjunct.toString d ++ ") = " ++ Disjunct.toString resD)
+printLogEntry : LogEntry -> Int -> (String, String)
+printLogEntry le index =
+    case le of
+        Res d1 d2 sub resD -> (subToString sub, "D" ++ String.fromInt index ++ " = Res(" ++ Disjunct.indexToString d1 ++ ", " ++ Disjunct.indexToString d2 ++ ") = " ++ Disjunct.toString resD)
+        Col d sub resD -> (subToString sub, "D" ++ String.fromInt index ++ " = Col(" ++ Disjunct.indexToString d ++ ") = " ++ Disjunct.toString resD)
 
-resolvents : Disjunct -> Disjunct -> List (Disjunct, LogEntry)
-resolvents d1 d2 =
+resolvents : IndexedDisjunct -> IndexedDisjunct -> List (Disjunct, LogEntry)
+resolvents (i1, d1) (i2, d2) =
     let
         d1List = Disjunct.toList d1
         d2List = Disjunct.toList d2
@@ -32,11 +33,11 @@ resolvents d1 d2 =
                             (Disjunct.map (replaceInLiteral sub) newD1)
                             (Disjunct.map (replaceInLiteral sub) newD2)
                     in
-                    (resolvent, (Res d1 d2 sub resolvent)) :: acc
+                    (resolvent, (Res (i1, d1) (i2, d2) sub resolvent)) :: acc
         ) []
     
-colapses : Disjunct -> List (Disjunct, LogEntry)
-colapses d =
+colapses : IndexedDisjunct -> List (Disjunct, LogEntry)
+colapses (i, d) =
     let
         dList = Disjunct.toList d
     in
@@ -49,6 +50,6 @@ colapses d =
                         newD = Disjunct.remove l2 (Disjunct.remove l1 d)
                         colapse = Disjunct.map (replaceInLiteral sub) newD
                     in
-                    (colapse, Col d sub colapse) :: acc
+                    (colapse, Col (i, d) sub colapse) :: acc
         ) []
     

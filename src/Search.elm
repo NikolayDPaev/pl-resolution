@@ -2,15 +2,16 @@ module Search exposing (..)
 
 import Disjunct
 import DisjunctSet exposing (DisjunctSet)
-import ResolutionStep exposing (LogEntry, resolvents, colapses)
+import ResolutionStep exposing (resolvents, colapses)
 import PriorityQueue exposing (PriorityQueue)
 import ListHelperFunctions exposing (..)
 import Heuristic exposing (minPseudoResolutionSteps)
+import ResolutionStep exposing (printLogEntry)
 
 type alias Node =
     { disjuncts : DisjunctSet
     , gScore : Int
-    , log : List LogEntry
+    , log : List (String, String)
     }
 
 -- simple heuristic that finds the minimum size of disjunct
@@ -21,7 +22,7 @@ hScore node =
 generateChildren : Node -> List Node
 generateChildren node = 
     let
-        disjuncts = DisjunctSet.toList node.disjuncts
+        disjuncts = DisjunctSet.toIndexedList node.disjuncts
     in
     subsetsOf2 disjuncts
         |> List.concatMap (\ (d1, d2) -> resolvents d1 d2)
@@ -29,7 +30,7 @@ generateChildren node =
         |> List.map (\ (d, logEntry) -> {
                 disjuncts = DisjunctSet.insert d node.disjuncts, 
                 gScore = node.gScore + 1,
-                log = List.append node.log [logEntry]
+                log = List.append node.log [printLogEntry logEntry (DisjunctSet.size node.disjuncts)]
             }
         )
         |> List.filter (\ child -> child.disjuncts /= node.disjuncts) -- dont allow cycles
@@ -53,7 +54,7 @@ aStarLoop queue step =
                     aStarLoop newQueue (step + 1)
         _ -> Nothing
 
-resolutionMethod : DisjunctSet -> Maybe (List LogEntry)
+resolutionMethod : DisjunctSet -> Maybe (List (String, String))
 resolutionMethod startingSet =
     let
         startNode = {disjuncts = startingSet, gScore = 0, log = []}
