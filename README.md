@@ -1,7 +1,9 @@
 # pl-resolution
-Implementation of the resolution method in first order predicate logic.
+Implementation of the resolution method in first order predicate logic. 
+ 
+[Github pages link](https://nikolaydpaev.github.io/pl-resolution/)
 
-## Running
+## Running locally
 The algorithm runs in static web page.
   - ```elm make src/Main.elm --output main.js --optimize ```
   - open ```index.html``` in browser
