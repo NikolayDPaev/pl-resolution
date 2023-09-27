@@ -11,7 +11,7 @@ The app takes as input the language symbols as well as set of formulas.
 Then processes the formulas and transforms them into disjunct set, that later can be used as input to the resolution method algorithm.
 If the formulas are unsatisfiable, the steps for proving that with the resolution method are displayed.
 
-The resolution method is semi-computable which means that it will go in infinite loop on some inputs.
+The resolution method is semi-computable, this is why the steps are limited so the algorithm will not go in infinite loop.
 
 Moreover the displayed steps are optimal in length because the algorithm uses A* for the searching.
 
@@ -19,5 +19,4 @@ Moreover the displayed steps are optimal in length because the algorithm uses A*
 Still in progress.
 
 ## Known issues:
-  - The algorithm runs synchronously to the UI and this can lead to freezing of the whole page if the input formulas are satisfiable.
   - The algorithm fails to start on some inputs

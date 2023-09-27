@@ -67,21 +67,21 @@ final ds =
     DisjunctSet.any Disjunct.isEmpty ds
 
 bfsLoop : List (DisjunctSet, Int) -> Int -> Int
-bfsLoop queue maxSteps =
+bfsLoop queue maxDepth =
     case queue of
         (current, step) :: restQueue ->
             if final current then
                 step
-            else if step >= maxSteps then
+            else if step > maxDepth then
                 step
             else
                 let
                     children = generateChildren (current, step)
                     newQueue = List.append restQueue children
                 in
-                    bfsLoop newQueue maxSteps
-        _ -> maxSteps
+                    bfsLoop newQueue maxDepth
+        _ -> maxDepth
 
-minPseudoResolutionSteps : DisjunctSet -> Int
-minPseudoResolutionSteps ds =
-    bfsLoop [(ds, 0)] 10
+minPseudoResolutionSteps : DisjunctSet -> Int -> Int
+minPseudoResolutionSteps ds maxDepth =
+    bfsLoop [(ds, 0)] (if maxDepth > 10 then 10 else maxDepth)

@@ -27,13 +27,13 @@ body {
     height: 100%;
 }
 
-.language, .formulas, .insert-symbols, .transformations, .resolution {
+.language, .formulas, .insert-symbols, .resolution {
     width: 100%;
     margin-top: 10px;
     margin-bottom: 10px;
 }
 
-.language-input, .formula-input {
+.language-input, .formula-input, .steps-input {
     width: 100%;
     padding: 4 8px;
     border: 1px solid #ccc;
@@ -41,10 +41,17 @@ body {
     margin: 5 0px;
 }
 
-.language-input {
+.language-input, .steps-input {
     display: inline-block;
     width: calc(25% - 15px);
     min-width: 100px;
+    margin: 2px 8px 2px 0px;
+}
+
+.steps-input {
+    display: inline-block;
+    width: calc(10% - 15px);
+    min-width: 50px;
     margin: 2px 8px 2px 0px;
 }
 
@@ -84,7 +91,7 @@ button {
     border-radius: 4px;
     padding: 5px 10px;
     cursor: pointer;
-    margin-right: 5px;
+    margin: 5px 5px 5px 0px;
 }
 
 button:hover {

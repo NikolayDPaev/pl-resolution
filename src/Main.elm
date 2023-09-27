@@ -11,6 +11,7 @@ import Html exposing (Html, div, input, button, text, span, ol, li)
 import Html.Attributes exposing (placeholder, class, value)
 import Html.Events exposing (onClick, onInput, onFocus)
 import Set exposing (Set)
+import Html.Attributes exposing (type_)
 
 type alias Model =
     { variables : String
@@ -25,7 +26,9 @@ type alias Model =
     , transformedFormulasText : List (List (String, String))
     , disjunctSet : DisjunctSet
     , transformationResult : (String, String)
+    , maxDepth : Int
     , resolutionSteps : List (String, String)
+    , resolutionError : Maybe String
     }
 
 init : Model
@@ -42,7 +45,9 @@ init =
     , transformedFormulasText = []
     , disjunctSet = DisjunctSet.empty
     , transformationResult = ("", "")
+    , maxDepth = 10
     , resolutionSteps = []
+    , resolutionError = Nothing
     }
 
 type Msg
@@ -56,6 +61,7 @@ type Msg
     | FocusChanged (Maybe Int)
     | UpdateFormula Int String
     | StartTransformations
+    | UpdateMaxDepth String
     | StartResolution
 
 update : Msg -> Model -> Model
@@ -212,22 +218,31 @@ update msg model =
                         else ("Final Disjunct set:", DisjunctSet.toIndexedString finalDisjunctSet)
                      , disjunctSet = finalDisjunctSet}
 
+        UpdateMaxDepth str ->
+            {model | maxDepth = String.toInt str
+                        |> Maybe.map (\ num -> if num < 0 then 0 else num)
+                        |> Maybe.withDefault 10}
+
         StartResolution ->
-            -- must be async
             if DisjunctSet.isEmpty model.disjunctSet then
                 { model | resolutionSteps = []}
             else
-                { model | resolutionSteps = Maybe.withDefault [] (resolutionMethod model.disjunctSet) }
+                case (resolutionMethod model.disjunctSet model.maxDepth) of
+                    Just log -> {model | resolutionSteps = log, resolutionError = Nothing}
+                    Nothing -> {
+                        model | resolutionSteps = [], 
+                                resolutionError = Just ("Unable to solve in under " ++ (String.fromInt model.maxDepth) ++ " steps.")        
+                        }
 
 view : Model -> Html Msg
 view model =
     div [ class "app" ] [   
         div [ class "language" ]
             [ div [ class "label" ] [ text "Language: " ]
-            , input [ class "language-input" ,placeholder "Variables", value model.variables, onInput UpdateVariables ] []
-            , input [ class "language-input" ,placeholder "Predicates", value model.predicates, onInput UpdatePredicates ] []
-            , input [ class "language-input" ,placeholder "Functions", value model.functions, onInput UpdateFunctions ] []
-            , input [ class "language-input" ,placeholder "Constants", value model.constants, onInput UpdateConstants ] []
+            , input [ class "language-input", placeholder "Variables", value model.variables, onInput UpdateVariables ] []
+            , input [ class "language-input", placeholder "Predicates", value model.predicates, onInput UpdatePredicates ] []
+            , input [ class "language-input", placeholder "Functions", value model.functions, onInput UpdateFunctions ] []
+            , input [ class "language-input", placeholder "Constants", value model.constants, onInput UpdateConstants ] []
             ]
         , div [ class "formulas-insert-container" ] [
                 div [ class "formula-column" ]
@@ -284,7 +299,13 @@ view model =
                 ]
             ]
         , div [class "resolution"] [
-              button [ onClick StartResolution ] [ text "Apply Resolution" ]
+                div [class "max-steps"] [
+                    div [ class "label" ] [ text "Max steps:" ]
+                    , input [class "steps-input", type_ "number", value (String.fromInt model.maxDepth), onInput UpdateMaxDepth] []
+                ]
+              , button [ onClick StartResolution ] [ text "Apply Resolution" ]
+              , div [class "error"] [
+                    text (Maybe.withDefault "" model.resolutionError)]
               , ol [class "resolution-result"]
                 (List.map (\ (sub, step) -> li [class "resolution-step"] [
                     span [] [text sub],

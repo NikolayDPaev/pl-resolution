@@ -73,5 +73,10 @@ impossibleUnificationTest = describe "impossible unification tests" [
             Expect.equal
             Nothing
             (unification (PositivePredicate "p" [Function "f" [Variable "x"], Constant "c"]) (NegativePredicate "p" [Function "f" [Function "g" [Variable "y"]], Variable "x"]))
+        ),
+    test "impossible unification p(X, f(X)) and p(f(Z), Z)" (\ _ ->
+            Expect.equal
+            Nothing
+            (unification (PositivePredicate "p" [Variable "x", Function "f" [Variable "x"]]) (NegativePredicate "p" [Function "f" [Variable "z"], Variable "z"]))
         )
     ]

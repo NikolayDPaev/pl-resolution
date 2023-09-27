@@ -121,7 +121,7 @@ minPseudoResolutionStepsTest = describe "minPseudoResolutionSteps test" [
                             NegativePredicate "s" [Variable "u"]
                         ]
                     ])
-            in Expect.equal (minPseudoResolutionSteps ds) 4
+            in Expect.equal (minPseudoResolutionSteps ds 10) 4
         ),
         test "simple pseudo resolution steps of {{p(v), r(a, v)}, {q(v, g(v)), ¬s(v)}, {s(f(v))}, {¬p(g(v)), ¬s(v)}, {¬q(f(v), x), ¬r(v, x)}}"
         (\_ -> let
@@ -147,6 +147,6 @@ minPseudoResolutionStepsTest = describe "minPseudoResolutionSteps test" [
                             NegativePredicate "r" [Variable "v", Variable "x"]
                         ]
                     ])
-            in Expect.equal (minPseudoResolutionSteps ds) 4
+            in Expect.equal (minPseudoResolutionSteps ds 10) 4
         )
     ]
