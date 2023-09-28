@@ -26,7 +26,7 @@ type alias Model =
     , transformedFormulasText : List (List (String, String))
     , disjunctSet : DisjunctSet
     , transformationResult : (String, String)
-    , maxDepth : Int
+    , maxDepth : String
     , resolutionSteps : List (String, String)
     , resolutionError : Maybe String
     }
@@ -45,7 +45,7 @@ init =
     , transformedFormulasText = []
     , disjunctSet = DisjunctSet.empty
     , transformationResult = ("", "")
-    , maxDepth = 10
+    , maxDepth = "10"
     , resolutionSteps = []
     , resolutionError = Nothing
     }
@@ -219,20 +219,21 @@ update msg model =
                      , disjunctSet = finalDisjunctSet}
 
         UpdateMaxDepth str ->
-            {model | maxDepth = String.toInt str
-                        |> Maybe.map (\ num -> if num < 0 then 0 else num)
-                        |> Maybe.withDefault 10}
+            {model | maxDepth = str}
 
         StartResolution ->
             if DisjunctSet.isEmpty model.disjunctSet then
                 { model | resolutionSteps = []}
             else
-                case (resolutionMethod model.disjunctSet model.maxDepth) of
-                    Just log -> {model | resolutionSteps = log, resolutionError = Nothing}
-                    Nothing -> {
-                        model | resolutionSteps = [], 
-                                resolutionError = Just ("Unable to solve in under " ++ (String.fromInt model.maxDepth) ++ " steps.")        
-                        }
+                case (String.toInt model.maxDepth |> Maybe.andThen (\ num -> if num <= 0 then Nothing else Just num)) of
+                    Nothing -> {model | maxDepth = "10"}
+                    Just maxDepth -> 
+                        case (resolutionMethod model.disjunctSet maxDepth) of
+                            Just log -> {model | resolutionSteps = log, resolutionError = Nothing}
+                            Nothing -> {
+                                model | resolutionSteps = [], 
+                                        resolutionError = Just ("Unable to solve in under " ++ model.maxDepth ++ " steps.")        
+                                }
 
 view : Model -> Html Msg
 view model =
@@ -301,7 +302,7 @@ view model =
         , div [class "resolution"] [
                 div [class "max-steps"] [
                     div [ class "label" ] [ text "Max steps:" ]
-                    , input [class "steps-input", type_ "number", value (String.fromInt model.maxDepth), onInput UpdateMaxDepth] []
+                    , input [class "steps-input", type_ "number", value model.maxDepth, onInput UpdateMaxDepth] []
                 ]
               , button [ onClick StartResolution ] [ text "Apply Resolution" ]
               , div [class "error"] [

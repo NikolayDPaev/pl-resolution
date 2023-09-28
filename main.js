@@ -4712,7 +4712,7 @@ var $elm$core$Set$empty = $elm$core$Dict$empty;
 var $author$project$Language$empty = {aL: $elm$core$Set$empty, aQ: $elm$core$Set$empty, aW: $elm$core$Set$empty, a1: $elm$core$Set$empty};
 var $author$project$Main$init = {
 	az: '',
-	Y: $author$project$DisjunctSet$empty,
+	Z: $author$project$DisjunctSet$empty,
 	aB: $elm$core$Maybe$Nothing,
 	m: _List_fromArray(
 		[
@@ -4723,12 +4723,12 @@ var $author$project$Main$init = {
 	aC: '',
 	G: $author$project$Language$empty,
 	an: $author$project$Language$empty,
-	ab: 10,
+	R: '10',
 	aE: '',
 	ar: $elm$core$Maybe$Nothing,
 	ac: _List_Nil,
 	ae: _Utils_Tuple2('', ''),
-	U: _List_Nil,
+	V: _List_Nil,
 	aK: ''
 };
 var $elm$core$Result$Err = function (a) {
@@ -5350,6 +5350,15 @@ var $author$project$Main$UpdateFormula = F2(
 	function (a, b) {
 		return {$: 8, a: a, b: b};
 	});
+var $elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (!maybeValue.$) {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $author$project$Language$And = 0;
 var $author$project$Language$Operation = F3(
 	function (a, b, c) {
@@ -5584,16 +5593,6 @@ var $elm$core$List$isEmpty = function (xs) {
 		return false;
 	}
 };
-var $elm$core$Maybe$map = F2(
-	function (f, maybe) {
-		if (!maybe.$) {
-			var value = maybe.a;
-			return $elm$core$Maybe$Just(
-				f(value));
-		} else {
-			return $elm$core$Maybe$Nothing;
-		}
-	});
 var $elm$core$Tuple$mapFirst = F2(
 	function (func, _v0) {
 		var x = _v0.a;
@@ -7116,15 +7115,6 @@ var $author$project$ListHelperFunctions$subsetsOf2 = function (list) {
 	}
 };
 var $author$project$Disjunct$toList = $turboMaCk$any_set$Set$Any$toList;
-var $elm$core$Maybe$andThen = F2(
-	function (callback, maybeValue) {
-		if (!maybeValue.$) {
-			var value = maybeValue.a;
-			return callback(value);
-		} else {
-			return $elm$core$Maybe$Nothing;
-		}
-	});
 var $author$project$Substitution$empty = _List_Nil;
 var $author$project$Unification$DifferentSubTerms = function (a) {
 	return {$: 1, a: a};
@@ -7648,9 +7638,9 @@ var $author$project$Search$generateChildren = function (node) {
 				return {
 					A: A2($author$project$DisjunctSet$insert, d, node.A),
 					al: node.al + 1,
-					aa: A2(
+					ab: A2(
 						$elm$core$List$append,
-						node.aa,
+						node.ab,
 						_List_fromArray(
 							[
 								A2(
@@ -7678,7 +7668,7 @@ var $author$project$Search$generateChildren = function (node) {
 					$author$project$ListHelperFunctions$subsetsOf2(disjuncts)))));
 };
 var $fifth_postulate$priority_queue$PriorityQueue$Kernel$head = function (_v0) {
-	var tree = _v0.V;
+	var tree = _v0.W;
 	if (!tree.$) {
 		return $elm$core$Maybe$Nothing;
 	} else {
@@ -7759,10 +7749,10 @@ var $fifth_postulate$priority_queue$PriorityQueue$Kernel$singleton = function (e
 var $fifth_postulate$priority_queue$PriorityQueue$Kernel$insert = F2(
 	function (element, _v0) {
 		var priority = _v0.aq;
-		var tree = _v0.V;
+		var tree = _v0.W;
 		var a = $fifth_postulate$priority_queue$PriorityQueue$Kernel$singleton(element);
 		var merged = A3($fifth_postulate$priority_queue$PriorityQueue$Kernel$merge, priority, a, tree);
-		return {aq: priority, V: merged};
+		return {aq: priority, W: merged};
 	});
 var $fifth_postulate$priority_queue$PriorityQueue$insert = F2(
 	function (element, queue) {
@@ -7770,14 +7760,14 @@ var $fifth_postulate$priority_queue$PriorityQueue$insert = F2(
 	});
 var $fifth_postulate$priority_queue$PriorityQueue$Kernel$tail = function (queue) {
 	var priority = queue.aq;
-	var tree = queue.V;
+	var tree = queue.W;
 	if (!tree.$) {
 		return queue;
 	} else {
 		var a = tree.c;
 		var b = tree.d;
 		var merged = A3($fifth_postulate$priority_queue$PriorityQueue$Kernel$merge, priority, a, b);
-		return {aq: priority, V: merged};
+		return {aq: priority, W: merged};
 	}
 };
 var $fifth_postulate$priority_queue$PriorityQueue$tail = function (queue) {
@@ -7791,7 +7781,7 @@ var $author$project$Search$aStarLoop = F2(
 			if (!_v0.$) {
 				var current = _v0.a;
 				if (_Utils_cmp(
-					$elm$core$List$length(current.aa),
+					$elm$core$List$length(current.ab),
 					maxDepth) > 0) {
 					return $elm$core$Maybe$Nothing;
 				} else {
@@ -7815,7 +7805,7 @@ var $author$project$Search$aStarLoop = F2(
 	});
 var $fifth_postulate$priority_queue$PriorityQueue$Kernel$emptyTree = $fifth_postulate$priority_queue$PriorityQueue$Kernel$Empty;
 var $fifth_postulate$priority_queue$PriorityQueue$Kernel$empty = function (priority) {
-	return {aq: priority, V: $fifth_postulate$priority_queue$PriorityQueue$Kernel$emptyTree};
+	return {aq: priority, W: $fifth_postulate$priority_queue$PriorityQueue$Kernel$emptyTree};
 };
 var $fifth_postulate$priority_queue$PriorityQueue$empty = function (priority) {
 	return $fifth_postulate$priority_queue$PriorityQueue$Kernel$empty(priority);
@@ -7971,9 +7961,19 @@ var $author$project$Search$hScore = F2(
 	function (node, maxDepth) {
 		return A2($author$project$Heuristic$minPseudoResolutionSteps, node.A, maxDepth);
 	});
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (!maybe.$) {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $author$project$Search$resolutionMethod = F2(
 	function (startingSet, maxDepth) {
-		var startNode = {A: startingSet, al: 0, aa: _List_Nil};
+		var startNode = {A: startingSet, al: 0, ab: _List_Nil};
 		var emptyQueue = $fifth_postulate$priority_queue$PriorityQueue$empty(
 			function (node) {
 				return node.al + A2($author$project$Search$hScore, node, maxDepth);
@@ -7982,7 +7982,7 @@ var $author$project$Search$resolutionMethod = F2(
 		return A2(
 			$elm$core$Maybe$map,
 			function (finalNode) {
-				return finalNode.aa;
+				return finalNode.ab;
 			},
 			A2($author$project$Search$aStarLoop, initialQueue, maxDepth));
 	});
@@ -8728,9 +8728,9 @@ var $author$project$Main$update = F2(
 			return A3(
 				$elm$core$List$foldl,
 				F2(
-					function (_v13, newModel) {
-						var index = _v13.a;
-						var formula = _v13.b;
+					function (_v14, newModel) {
+						var index = _v14.a;
+						var formula = _v14.b;
 						return A2(
 							$author$project$Main$update,
 							A2($author$project$Main$UpdateFormula, index, formula),
@@ -9013,10 +9013,10 @@ var $author$project$Main$update = F2(
 				var clearedModel = _Utils_update(
 					model,
 					{
-						Y: $author$project$DisjunctSet$empty,
+						Z: $author$project$DisjunctSet$empty,
 						an: model.G,
 						ae: _Utils_Tuple2('', ''),
-						U: _List_Nil
+						V: _List_Nil
 					});
 				var _v5 = A3(
 					$elm$core$List$foldl,
@@ -9033,8 +9033,8 @@ var $author$project$Main$update = F2(
 									oldModel,
 									{
 										an: newL,
-										U: _Utils_ap(
-											oldModel.U,
+										V: _Utils_ap(
+											oldModel.V,
 											_List_fromArray(
 												[lines]))
 									}),
@@ -9047,8 +9047,8 @@ var $author$project$Main$update = F2(
 				return _Utils_update(
 					newM,
 					{
-						Y: finalDisjunctSet,
-						ae: $elm$core$List$isEmpty(newM.U) ? _Utils_Tuple2('', '') : _Utils_Tuple2(
+						Z: finalDisjunctSet,
+						ae: $elm$core$List$isEmpty(newM.V) ? _Utils_Tuple2('', '') : _Utils_Tuple2(
 							'Final Disjunct set:',
 							$author$project$DisjunctSet$toIndexedString(finalDisjunctSet))
 					});
@@ -9056,37 +9056,39 @@ var $author$project$Main$update = F2(
 				var str = msg.a;
 				return _Utils_update(
 					model,
-					{
-						ab: A2(
-							$elm$core$Maybe$withDefault,
-							10,
-							A2(
-								$elm$core$Maybe$map,
-								function (num) {
-									return (num < 0) ? 0 : num;
-								},
-								$elm$core$String$toInt(str)))
-					});
+					{R: str});
 			default:
-				if ($author$project$DisjunctSet$isEmpty(model.Y)) {
+				if ($author$project$DisjunctSet$isEmpty(model.Z)) {
 					return _Utils_update(
 						model,
 						{ac: _List_Nil});
 				} else {
-					var _v12 = A2($author$project$Search$resolutionMethod, model.Y, model.ab);
-					if (!_v12.$) {
-						var log = _v12.a;
+					var _v12 = A2(
+						$elm$core$Maybe$andThen,
+						function (num) {
+							return (num <= 0) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(num);
+						},
+						$elm$core$String$toInt(model.R));
+					if (_v12.$ === 1) {
 						return _Utils_update(
 							model,
-							{ar: $elm$core$Maybe$Nothing, ac: log});
+							{R: '10'});
 					} else {
-						return _Utils_update(
-							model,
-							{
-								ar: $elm$core$Maybe$Just(
-									'Unable to solve in under ' + ($elm$core$String$fromInt(model.ab) + ' steps.')),
-								ac: _List_Nil
-							});
+						var maxDepth = _v12.a;
+						var _v13 = A2($author$project$Search$resolutionMethod, model.Z, maxDepth);
+						if (!_v13.$) {
+							var log = _v13.a;
+							return _Utils_update(
+								model,
+								{ar: $elm$core$Maybe$Nothing, ac: log});
+						} else {
+							return _Utils_update(
+								model,
+								{
+									ar: $elm$core$Maybe$Just('Unable to solve in under ' + (model.R + ' steps.')),
+									ac: _List_Nil
+								});
+						}
 					}
 				}
 		}
@@ -9554,7 +9556,7 @@ var $author$project$Main$view = function (model) {
 															formulaLines))
 													]));
 										}),
-									model.U)),
+									model.V)),
 								A2(
 								$elm$html$Html$div,
 								_List_Nil,
@@ -9612,8 +9614,7 @@ var $author$project$Main$view = function (model) {
 									[
 										$elm$html$Html$Attributes$class('steps-input'),
 										$elm$html$Html$Attributes$type_('number'),
-										$elm$html$Html$Attributes$value(
-										$elm$core$String$fromInt(model.ab)),
+										$elm$html$Html$Attributes$value(model.R),
 										$elm$html$Html$Events$onInput($author$project$Main$UpdateMaxDepth)
 									]),
 								_List_Nil)
