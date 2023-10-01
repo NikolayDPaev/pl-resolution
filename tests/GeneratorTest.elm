@@ -27,7 +27,7 @@ tests =
                     (List.range 1 (List.length expectedList)) |> Tuple.second )
         ),
         test "generate funcs" (\_ ->
-            let expectedList = ["h", "i", "j", "f0", "g0", "h0", "i0", "j0", "f1", "g1", "h1", "i1", "j1"]
+            let expectedList = ["h", "k", "l", "i", "j", "f0", "g0", "h0", "k0", "l0", "i0", "j0", "f1"]
             in
                 Expect.equalLists
                     expectedList
@@ -38,7 +38,7 @@ tests =
                     (List.range 1 (List.length expectedList)) |> Tuple.second )
         ),
         test "generate vars" (\_ ->
-            let expectedList = ["z", "u", "v", "x0", "y0", "z0", "u0", "v0", "x1", "y1", "z1", "u1", "v1"]
+            let expectedList = ["z", "u", "v", "t", "w", "x0", "y0", "z0", "u0", "v0", "t0", "w0", "x1"]
             in
                 Expect.equalLists
                     expectedList

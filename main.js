@@ -7995,9 +7995,9 @@ var $author$project$Generator$createGenerator = F3(
 			as: _List_fromArray(
 				['a', 'b', 'c', 'd', 'e']),
 			at: _List_fromArray(
-				['f', 'g', 'h', 'i', 'j']),
+				['f', 'g', 'h', 'k', 'l', 'i', 'j']),
 			au: _List_fromArray(
-				['x', 'y', 'z', 'u', 'v'])
+				['x', 'y', 'z', 'u', 'v', 't', 'w'])
 		};
 	});
 var $elm$core$Char$fromCode = _Char_fromCode;
@@ -8605,11 +8605,8 @@ var $author$project$Transformations$toPNF = F2(
 			};
 			return loop(initF);
 		};
-		var generatorWithout = function (vars) {
-			return A3($author$project$Generator$createGenerator, $elm$core$Set$empty, $elm$core$Set$empty, vars);
-		};
-		var makeUniqueBounded = F3(
-			function (l, f, varsByFar) {
+		var makeUniqueBounded = F4(
+			function (l, gen, f, varsByFar) {
 				switch (f.$) {
 					case 0:
 						var terms = f.b;
@@ -8624,77 +8621,99 @@ var $author$project$Transformations$toPNF = F2(
 								}),
 							varsByFar,
 							terms);
-						return _Utils_Tuple3(f, vars, l);
+						return _Utils_Tuple3(
+							f,
+							vars,
+							_Utils_Tuple2(l, gen));
 					case 1:
 						var f1 = f.a;
-						var _v11 = A3(makeUniqueBounded, l, f1, varsByFar);
+						var _v11 = A4(makeUniqueBounded, l, gen, f1, varsByFar);
 						var newF1 = _v11.a;
 						var newVars = _v11.b;
-						var newL = _v11.c;
+						var _v12 = _v11.c;
+						var newL = _v12.a;
+						var newGen = _v12.b;
 						return _Utils_Tuple3(
 							$author$project$Transformations$negate(newF1),
 							newVars,
-							newL);
+							_Utils_Tuple2(newL, newGen));
 					case 2:
 						var f1 = f.a;
 						var op = f.b;
 						var f2 = f.c;
-						var _v12 = A3(makeUniqueBounded, l, f1, varsByFar);
-						var newF1 = _v12.a;
-						var newVarsF1 = _v12.b;
-						var newL1 = _v12.c;
-						var _v13 = A3(makeUniqueBounded, newL1, f2, newVarsF1);
-						var newF2 = _v13.a;
-						var newVarsF2 = _v13.b;
-						var newL2 = _v13.c;
+						var _v13 = A4(makeUniqueBounded, l, gen, f1, varsByFar);
+						var newF1 = _v13.a;
+						var newVarsF1 = _v13.b;
+						var _v14 = _v13.c;
+						var newL1 = _v14.a;
+						var newGen1 = _v14.b;
+						var _v15 = A4(makeUniqueBounded, newL1, newGen1, f2, newVarsF1);
+						var newF2 = _v15.a;
+						var newVarsF2 = _v15.b;
+						var _v16 = _v15.c;
+						var newL2 = _v16.a;
+						var newGen2 = _v16.b;
 						return _Utils_Tuple3(
 							A3($author$project$Language$Operation, newF1, op, newF2),
 							newVarsF2,
-							newL2);
+							_Utils_Tuple2(newL2, newGen2));
 					default:
 						var q = f.a;
 						var x = f.b;
 						var f1 = f.c;
 						if (A2($elm$core$Set$member, x, varsByFar)) {
-							var newX = $author$project$Generator$getVar(
-								generatorWithout(varsByFar)).a;
+							var _v17 = $author$project$Generator$getVar(gen);
+							var newX = _v17.a;
+							var newGen = _v17.b;
+							var newF1 = A3(substituteVar, x, newX, f1);
 							var newL = _Utils_update(
 								l,
 								{
 									a1: A2($elm$core$Set$insert, newX, l.a1)
 								});
-							var newF1 = A3(substituteVar, x, newX, f1);
-							var _v14 = A3(
+							var _v18 = A4(
 								makeUniqueBounded,
 								newL,
+								newGen,
 								newF1,
 								A2($elm$core$Set$insert, newX, varsByFar));
-							var finalF1 = _v14.a;
-							var finalVars = _v14.b;
-							var finalL = _v14.c;
+							var finalF1 = _v18.a;
+							var finalVars = _v18.b;
+							var _v19 = _v18.c;
+							var finalL = _v19.a;
+							var newGen2 = _v19.b;
 							return _Utils_Tuple3(
 								A3($author$project$Language$Quantification, q, newX, finalF1),
 								finalVars,
-								finalL);
+								_Utils_Tuple2(finalL, newGen2));
 						} else {
-							var _v15 = A3(
+							var _v20 = A4(
 								makeUniqueBounded,
 								l,
+								gen,
 								f1,
 								A2($elm$core$Set$insert, x, varsByFar));
-							var finalF1 = _v15.a;
-							var finalVars = _v15.b;
-							var finalL = _v15.c;
+							var finalF1 = _v20.a;
+							var finalVars = _v20.b;
+							var _v21 = _v20.c;
+							var finalL = _v21.a;
+							var newGen = _v21.b;
 							return _Utils_Tuple3(
 								A3($author$project$Language$Quantification, q, x, finalF1),
 								finalVars,
-								finalL);
+								_Utils_Tuple2(finalL, newGen));
 						}
 				}
 			});
-		var _v16 = A3(makeUniqueBounded, lang, formula, $elm$core$Set$empty);
-		var uniqueBoundedF = _v16.a;
-		var modifiedL = _v16.c;
+		var _v22 = A4(
+			makeUniqueBounded,
+			lang,
+			A3($author$project$Generator$createGenerator, lang.aL, lang.aQ, lang.a1),
+			formula,
+			$elm$core$Set$empty);
+		var uniqueBoundedF = _v22.a;
+		var _v23 = _v22.c;
+		var modifiedL = _v23.a;
 		return _Utils_Tuple2(
 			pullQuantors(uniqueBoundedF),
 			modifiedL);

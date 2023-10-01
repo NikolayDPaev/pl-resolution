@@ -16,8 +16,8 @@ createGenerator fc ff fv = {
     forbiddenFuncs = ff,
     forbiddenVars = fv,
     stateConsts = ["a", "b", "c", "d", "e"],
-    stateFuncs = ["f", "g", "h", "i", "j"],
-    stateVars = ["x", "y", "z", "u", "v"]
+    stateFuncs = ["f", "g", "h", "k", "l", "i", "j"],
+    stateVars = ["x", "y", "z", "u", "v", "t", "w"]
     }
 
 getConst : Generator -> (String, Generator)

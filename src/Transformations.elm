@@ -116,34 +116,31 @@ toPNF lang formula =
                     else 
                         Quantification q x (substituteVar var subVar f1)
 
-        generatorWithout : Set String -> Generator
-        generatorWithout vars = (createGenerator Set.empty Set.empty vars)
-
-        makeUniqueBounded : Language -> Formula -> Set String -> (Formula, Set String, Language)
-        makeUniqueBounded l f varsByFar =
+        makeUniqueBounded : Language -> Generator -> Formula -> Set String -> (Formula, Set String, (Language, Generator))
+        makeUniqueBounded l gen f varsByFar =
             case f of
                 Predicate _ terms ->
                     let vars = List.foldr (\ x acc -> Set.union (varsInTerm x) acc) varsByFar terms
-                    in (f, vars, l)
+                    in (f, vars, (l, gen))
                 Negation f1 ->
-                    let (newF1, newVars, newL) = makeUniqueBounded l f1 varsByFar
-                    in (negate newF1, newVars, newL)
+                    let (newF1, newVars, (newL, newGen)) = makeUniqueBounded l gen f1 varsByFar
+                    in (negate newF1, newVars, (newL, newGen))
                 Operation f1 op f2 ->
-                    let (newF1, newVarsF1, newL1) = makeUniqueBounded l f1 varsByFar
-                        (newF2, newVarsF2, newL2) = makeUniqueBounded newL1 f2 newVarsF1
-                    in ((Operation newF1 op newF2), newVarsF2, newL2)
+                    let (newF1, newVarsF1, (newL1, newGen1)) = makeUniqueBounded l gen f1 varsByFar
+                        (newF2, newVarsF2, (newL2, newGen2)) = makeUniqueBounded newL1 newGen1 f2 newVarsF1
+                    in ((Operation newF1 op newF2), newVarsF2, (newL2, newGen2))
                 Quantification q x f1 ->
                     if Set.member x varsByFar then
                         let
-                            newX = getVar (generatorWithout varsByFar) |> Tuple.first
+                            (newX, newGen) = getVar gen
                             newL = {l | vars = Set.insert newX l.vars}
                             newF1 = substituteVar x newX f1
-                            (finalF1, finalVars, finalL) = makeUniqueBounded newL newF1 (Set.insert newX varsByFar)
-                        in ((Quantification q newX finalF1), finalVars, finalL)
+                            (finalF1, finalVars, (finalL, newGen2)) = makeUniqueBounded newL newGen newF1 (Set.insert newX varsByFar)
+                        in ((Quantification q newX finalF1), finalVars, (finalL, newGen2))
                     else
                         let 
-                            (finalF1, finalVars, finalL) = makeUniqueBounded l f1 (Set.insert x varsByFar)
-                        in ((Quantification q x finalF1), finalVars, finalL)
+                            (finalF1, finalVars, (finalL, newGen)) = makeUniqueBounded l gen f1 (Set.insert x varsByFar)
+                        in ((Quantification q x finalF1), finalVars, (finalL, newGen))
         
         pullQuantors : Formula -> Formula
         pullQuantors initF =
@@ -175,7 +172,7 @@ toPNF lang formula =
             in
             loop initF
     
-        (uniqueBoundedF, _, modifiedL) = makeUniqueBounded lang formula Set.empty
+        (uniqueBoundedF, _, (modifiedL, _)) = makeUniqueBounded lang (createGenerator lang.consts lang.funcs lang.vars) formula Set.empty
     in 
     (pullQuantors uniqueBoundedF, modifiedL)
 

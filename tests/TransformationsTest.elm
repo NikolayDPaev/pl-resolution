@@ -166,8 +166,8 @@ skolemizationTest =
             ((Quantification ForAll "y" (Operation
                 (Predicate "p" [Function "h" [Variable "y"]])
                 Impl
-                (Predicate "q" [Function "h" [Variable "y"], Function "i" [Variable "y"]]))),
-            {lang | funcs = Set.union (Set.fromList ["h", "i"]) lang.funcs})
+                (Predicate "q" [Function "h" [Variable "y"], Function "k" [Variable "y"]]))),
+            {lang | funcs = Set.union (Set.fromList ["h", "k"]) lang.funcs})
             (skolemization lang 
                 (Quantification ForAll "y" (Quantification Exists "x" (Operation
                     (Predicate "p" [Variable "x"])
@@ -187,12 +187,12 @@ toPNFTest =
         test "simple" (\_ ->
             Expect.equal
             ((Quantification ForAll "x"
-                (Quantification ForAll "y"
+                (Quantification ForAll "z"
                     (Operation 
                         (Predicate "p" [Variable "x"])
                         And 
-                        (Predicate "q"[Variable "y"])))), lang)
-            (toPNF lang 
+                        (Predicate "q"[Variable "z"])))), {lang | vars = Set.insert "z" lang.vars})
+            (toPNF lang
             (Operation 
                 (Quantification ForAll "x" (Predicate "p" [Variable "x"]))
                 And
@@ -262,7 +262,7 @@ toPNFTest =
         ),
         test "pull quantors 2" (\_ ->
             let 
-                lang1 = { consts = Set.fromList [], funcs = Set.fromList ["f"], preds = Set.fromList ["p","q"], vars = Set.fromList ["x","y","z"] }
+                lang1 = { consts = Set.fromList [], funcs = Set.fromList ["f"], preds = Set.fromList ["p","q"], vars = Set.fromList ["x","y"] }
             in
             Expect.equal
             ((Quantification ForAll "x"
@@ -277,6 +277,38 @@ toPNFTest =
                                     Or
                                     (Negation (Predicate "p" [Variable "u",Variable "z"])))))))),
             {lang1 | vars = Set.insert "u" (Set.insert "z" lang1.vars)})
+            (toPNF lang1
+            (Quantification ForAll "x" 
+                (Quantification ForAll "y" 
+                    (Operation 
+                        (Negation (Predicate "p" [Variable "x",Function "f" [Variable "y"]]))
+                        Or
+                        (Operation 
+                            (Predicate "p" [Function "f" [Variable "y"],Variable "x"])
+                            Or 
+                            (Quantification ForAll "y" 
+                                (Quantification ForAll "x" 
+                                    (Negation (Predicate "p" [Variable "x",Variable "y"])))))))
+            )
+            )
+        ),
+        test "pull quantors 3" (\_ ->
+            let 
+                lang1 = { consts = Set.fromList [], funcs = Set.fromList ["f"], preds = Set.fromList ["p","q"], vars = Set.fromList ["x","y","z"] }
+            in
+            Expect.equal
+            ((Quantification ForAll "x"
+                (Quantification ForAll "y" 
+                    (Quantification ForAll "u" 
+                        (Quantification ForAll "v" 
+                            (Operation 
+                                (Negation (Predicate "p" [Variable "x",Function "f" [Variable "y"]]))
+                                Or
+                                (Operation 
+                                    (Predicate "p" [Function "f" [Variable "y"],Variable "x"])
+                                    Or
+                                    (Negation (Predicate "p" [Variable "v",Variable "u"])))))))),
+            {lang1 | vars = Set.insert "u" (Set.insert "v" lang1.vars)})
             (toPNF lang1
             (Quantification ForAll "x" 
                 (Quantification ForAll "y" 
