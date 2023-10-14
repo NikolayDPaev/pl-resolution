@@ -61,6 +61,7 @@ generateChildren (ds, steps) =
         |> List.concatMap (\ (d1, d2) -> pseudoResolvents d1 d2)
         |> List.append (disjuncts |> List.concatMap (\ d -> pseudoColapses d))
         |> List.map (\ d -> (DisjunctSet.insert d ds, steps + 1))
+        |> List.filter (\ (childDisjuncts, _) -> childDisjuncts /= ds)
 
 final : DisjunctSet -> Bool
 final ds = 
@@ -84,4 +85,4 @@ bfsLoop queue maxDepth =
 
 minPseudoResolutionSteps : DisjunctSet -> Int -> Int
 minPseudoResolutionSteps ds maxDepth =
-    bfsLoop [(ds, 0)] (if maxDepth > 10 then 10 else maxDepth)
+    bfsLoop [(ds, 0)] maxDepth

@@ -14,10 +14,14 @@ type alias Node =
     , log : List (String, String)
     }
 
--- simple heuristic that finds the minimum size of disjunct
 hScore : Node -> Int -> Int
 hScore node maxDepth =
-    minPseudoResolutionSteps node.disjuncts maxDepth
+    node.disjuncts
+        |> DisjunctSet.toList
+        |> List.map Disjunct.size
+        |> List.minimum
+        |> Maybe.withDefault maxDepth
+    -- minPseudoResolutionSteps node.disjuncts maxDepth
 
 generateChildren : Node -> List Node
 generateChildren node = 
@@ -51,6 +55,7 @@ aStarLoop queue maxDepth =
                 let
                     restQueue = PriorityQueue.tail queue
                     children = generateChildren current
+                    -- _ = Debug.log "logs" (List.map (\ node -> node.log) children)
                     newQueue = children |> List.foldr PriorityQueue.insert restQueue
                 in
                     aStarLoop newQueue maxDepth
@@ -66,3 +71,20 @@ resolutionMethod startingSet maxDepth =
     aStarLoop initialQueue maxDepth
         |> Maybe.map (\ finalNode -> finalNode.log)
 
+-- bfsLoop : List Node -> Int -> Maybe Node
+-- bfsLoop queue maxDepth =
+--     case List.head queue of
+--         Just current ->
+--             if List.length current.log > maxDepth then
+--                 Nothing
+--             else if final current then
+--                 Just current
+--             else
+--                 let
+--                     restQueue = Maybe.withDefault [] (List.tail queue)
+--                     children = generateChildren current
+--                     -- _ = Debug.log "logs" (List.map (\ node -> node.log) children)
+--                     newQueue =  List.append children restQueue
+--                 in
+--                     bfsLoop newQueue maxDepth
+--         _ -> Nothing
