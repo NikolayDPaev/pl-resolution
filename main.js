@@ -7810,156 +7810,44 @@ var $fifth_postulate$priority_queue$PriorityQueue$Kernel$empty = function (prior
 var $fifth_postulate$priority_queue$PriorityQueue$empty = function (priority) {
 	return $fifth_postulate$priority_queue$PriorityQueue$Kernel$empty(priority);
 };
-var $author$project$Heuristic$final = function (ds) {
-	return A2($author$project$DisjunctSet$any, $author$project$Disjunct$isEmpty, ds);
-};
-var $author$project$Heuristic$pseudoUnification = F2(
-	function (l1, l2) {
-		var _v0 = _Utils_Tuple2(l1, l2);
-		_v0$2:
-		while (true) {
-			if (!_v0.a.$) {
-				if (_v0.b.$ === 1) {
-					var _v1 = _v0.a;
-					var p = _v1.a;
-					var _v2 = _v0.b;
-					var q = _v2.a;
-					return _Utils_eq(p, q);
-				} else {
-					break _v0$2;
-				}
-			} else {
-				if (!_v0.b.$) {
-					var _v3 = _v0.a;
-					var p = _v3.a;
-					var _v4 = _v0.b;
-					var q = _v4.a;
-					return _Utils_eq(p, q);
-				} else {
-					break _v0$2;
-				}
-			}
-		}
-		return false;
+var $elm$core$Basics$min = F2(
+	function (x, y) {
+		return (_Utils_cmp(x, y) < 0) ? x : y;
 	});
-var $author$project$Heuristic$pseudoColapses = function (d) {
-	var dList = $author$project$Disjunct$toList(d);
-	return A3(
-		$elm$core$List$foldr,
-		F2(
-			function (_v0, acc) {
-				var l1 = _v0.a;
-				var l2 = _v0.b;
-				if (A2($author$project$Heuristic$pseudoUnification, l1, l2)) {
-					var newD = A2(
-						$author$project$Disjunct$remove,
-						l2,
-						A2($author$project$Disjunct$remove, l1, d));
-					return A2($elm$core$List$cons, newD, acc);
-				} else {
-					return acc;
-				}
-			}),
-		_List_Nil,
-		$author$project$ListHelperFunctions$subsetsOf2(dList));
+var $elm$core$List$minimum = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(
+			A3($elm$core$List$foldl, $elm$core$Basics$min, x, xs));
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
 };
-var $author$project$Heuristic$pseudoResolvents = F2(
-	function (d1, d2) {
-		var d2List = $author$project$Disjunct$toList(d2);
-		var d1List = $author$project$Disjunct$toList(d1);
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (_v0, acc) {
-					var l1 = _v0.a;
-					var l2 = _v0.b;
-					if (A2($author$project$Heuristic$pseudoUnification, l1, l2)) {
-						var newD2 = A2($author$project$Disjunct$remove, l2, d2);
-						var newD1 = A2($author$project$Disjunct$remove, l1, d1);
-						var resolvent = A2($author$project$Disjunct$union, newD1, newD2);
-						return A2($elm$core$List$cons, resolvent, acc);
-					} else {
-						return acc;
-					}
-				}),
-			_List_Nil,
-			A2($author$project$ListHelperFunctions$allPairs, d1List, d2List));
-	});
+var $author$project$Disjunct$size = $turboMaCk$any_set$Set$Any$size;
 var $author$project$DisjunctSet$toList = A2(
 	$elm$core$Basics$composeR,
 	$turboMaCk$any_set$Set$Any$toList,
 	$elm$core$List$map($elm$core$Tuple$second));
-var $author$project$Heuristic$generateChildren = function (_v0) {
-	var ds = _v0.a;
-	var steps = _v0.b;
-	var disjuncts = $author$project$DisjunctSet$toList(ds);
-	return A2(
-		$elm$core$List$map,
-		function (d) {
-			return _Utils_Tuple2(
-				A2($author$project$DisjunctSet$insert, d, ds),
-				steps + 1);
-		},
-		A2(
-			$elm$core$List$append,
-			A2(
-				$elm$core$List$concatMap,
-				function (d) {
-					return $author$project$Heuristic$pseudoColapses(d);
-				},
-				disjuncts),
-			A2(
-				$elm$core$List$concatMap,
-				function (_v1) {
-					var d1 = _v1.a;
-					var d2 = _v1.b;
-					return A2($author$project$Heuristic$pseudoResolvents, d1, d2);
-				},
-				$author$project$ListHelperFunctions$subsetsOf2(disjuncts))));
-};
-var $author$project$Heuristic$bfsLoop = F2(
-	function (queue, maxDepth) {
-		bfsLoop:
-		while (true) {
-			if (queue.b) {
-				var _v1 = queue.a;
-				var current = _v1.a;
-				var step = _v1.b;
-				var restQueue = queue.b;
-				if ($author$project$Heuristic$final(current)) {
-					return step;
-				} else {
-					if (_Utils_cmp(step, maxDepth) > 0) {
-						return step;
-					} else {
-						var children = $author$project$Heuristic$generateChildren(
-							_Utils_Tuple2(current, step));
-						var newQueue = A2($elm$core$List$append, restQueue, children);
-						var $temp$queue = newQueue,
-							$temp$maxDepth = maxDepth;
-						queue = $temp$queue;
-						maxDepth = $temp$maxDepth;
-						continue bfsLoop;
-					}
-				}
-			} else {
-				return maxDepth;
-			}
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (!maybe.$) {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
 		}
-	});
-var $author$project$Heuristic$minPseudoResolutionSteps = F2(
-	function (ds, maxDepth) {
-		return A2(
-			$author$project$Heuristic$bfsLoop,
-			_List_fromArray(
-				[
-					_Utils_Tuple2(ds, 0)
-				]),
-			(maxDepth > 10) ? 10 : maxDepth);
 	});
 var $author$project$Search$hScore = F2(
 	function (node, maxDepth) {
-		return A2($author$project$Heuristic$minPseudoResolutionSteps, node.A, maxDepth);
+		return A2(
+			$elm$core$Maybe$withDefault,
+			maxDepth,
+			$elm$core$List$minimum(
+				A2(
+					$elm$core$List$map,
+					$author$project$Disjunct$size,
+					$author$project$DisjunctSet$toList(node.A))));
 	});
 var $elm$core$Maybe$map = F2(
 	function (f, maybe) {
@@ -8027,15 +7915,6 @@ var $elm$core$List$tail = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (!maybe.$) {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 var $author$project$Generator$getConst = function (generator) {
 	getConst:
 	while (true) {
