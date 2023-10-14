@@ -4451,6 +4451,7 @@ var $elm$core$Basics$EQ = 1;
 var $elm$core$Basics$GT = 2;
 var $elm$core$Basics$LT = 0;
 var $elm$core$Maybe$Nothing = {$: 1};
+var $author$project$Main$defaultMaxStep = '5';
 var $elm$core$Basics$identity = function (x) {
 	return x;
 };
@@ -4723,7 +4724,7 @@ var $author$project$Main$init = {
 	aC: '',
 	G: $author$project$Language$empty,
 	an: $author$project$Language$empty,
-	R: '10',
+	R: $author$project$Main$defaultMaxStep,
 	aE: '',
 	ar: $elm$core$Maybe$Nothing,
 	ac: _List_Nil,
@@ -8970,7 +8971,7 @@ var $author$project$Main$update = F2(
 					if (_v12.$ === 1) {
 						return _Utils_update(
 							model,
-							{R: '10'});
+							{R: $author$project$Main$defaultMaxStep});
 					} else {
 						var maxDepth = _v12.a;
 						var _v13 = A2($author$project$Search$resolutionMethod, model.Z, maxDepth);

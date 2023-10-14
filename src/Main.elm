@@ -13,6 +13,9 @@ import Html.Events exposing (onClick, onInput, onFocus)
 import Set exposing (Set)
 import Html.Attributes exposing (type_)
 
+defaultMaxStep : String
+defaultMaxStep = "5"
+
 type alias Model =
     { variables : String
     , predicates : String
@@ -45,7 +48,7 @@ init =
     , transformedFormulasText = []
     , disjunctSet = DisjunctSet.empty
     , transformationResult = ("", "")
-    , maxDepth = "10"
+    , maxDepth = defaultMaxStep
     , resolutionSteps = []
     , resolutionError = Nothing
     }
@@ -226,7 +229,7 @@ update msg model =
                 { model | resolutionSteps = []}
             else
                 case (String.toInt model.maxDepth |> Maybe.andThen (\ num -> if num <= 0 then Nothing else Just num)) of
-                    Nothing -> {model | maxDepth = "10"}
+                    Nothing -> {model | maxDepth = defaultMaxStep}
                     Just maxDepth -> 
                         case (resolutionMethod model.disjunctSet maxDepth) of
                             Just log -> {model | resolutionSteps = log, resolutionError = Nothing}
