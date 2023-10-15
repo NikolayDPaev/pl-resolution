@@ -21,4 +21,5 @@ Moreover the displayed steps are optimal in length because the algorithm uses A*
 Still in progress.
 
 ## Known issues:
+  - Currently the parser is right associative and does not support operation priorities.
   - The algorithm fails to start on some inputs

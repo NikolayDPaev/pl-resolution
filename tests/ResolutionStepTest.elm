@@ -64,12 +64,31 @@ resolutionTest = describe "resolution test" [
                             NegativePredicate "r" [Variable "v", Variable "x"]
                         ])
                 result = Disjunct.fromList [
-                            PositivePredicate "p" [Constant "a"],
-                            NegativePredicate "q" [Function "f" [Constant "a"], Constant "a"]
-                        ]
+                        PositivePredicate "p" [Constant "a"],
+                        NegativePredicate "q" [Function "f" [Constant "a"], Constant "a"]
+                    ]
             in
             Expect.equalLists
                 [(result, (Res d1 d2 (Substitution.fromList [("v", Constant "a"), ("x", Constant "a")]) result))]
+                (resolvents d1 d2)
+        ),
+        test "resolution of {q(x), ¬s(a, x)} and {s(x, z), ¬r(f(x), z)}" (\_ ->
+            let
+                d1 = (1, Disjunct.fromList [
+                        PositivePredicate "q" [Variable "x"],
+                        NegativePredicate "s" [Constant "a", Variable "x"]
+                    ])
+                d2 = (2, (Disjunct.fromList [
+                        PositivePredicate "s" [Variable "x", Variable "z"],
+                        NegativePredicate "r" [Function "f" [Variable "x"], Variable "z"]
+                    ]))
+                result = Disjunct.fromList [
+                        PositivePredicate "q" [Constant "a"],
+                        NegativePredicate "r" [Function "f" [Constant "a"], Constant "a"]
+                    ]
+            in
+            Expect.equalLists
+                [(result, (Res d1 d2 (Substitution.fromList [("x", Constant "a"), ("z", Constant "a")]) result))]
                 (resolvents d1 d2)
         )
     ]

@@ -42,7 +42,6 @@ transformations vars preds funcs consts formulaStrings =
                 (newL, DisjunctSet.union dss ds)
             ) (l, DisjunctSet.empty) formulas
 
-
         lang = {vars = parseLanguageSet vars, consts = parseLanguageSet consts, preds = parseLanguageSet preds, funcs = parseLanguageSet funcs}
         resultListFormulas = listOfResultToResultList (List.map (parse lang) formulaStrings)
     in
@@ -54,4 +53,3 @@ transformations vars preds funcs consts formulaStrings =
 resolution : Int -> DisjunctSet -> Result Error (List (String, String))
 resolution depth ds = 
     Result.fromMaybe ResolutionError (resolutionMethod ds depth)
- 
